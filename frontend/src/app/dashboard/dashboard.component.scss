@@ -34,10 +34,50 @@
   display: flex;
   flex-direction: column;
   min-height: 300px;
+  position: relative; // For absolute positioning of delete button
 
   &:hover {
     transform: translateY(-6px);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15), 0 6px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.delete-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  padding: 8px;
+  min-width: auto;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    color: rgba(0, 0, 0, 0.6);
+    transition: color 0.2s ease;
+  }
+
+  &:hover {
+    background-color: rgba(244, 67, 54, 0.9); // Material red
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
+
+    mat-icon {
+      color: white;
+    }
+  }
+
+  &:active {
+    transform: scale(0.95);
   }
 }
 
@@ -76,6 +116,30 @@
   clear: both;
   color: rgba(0, 0, 0, 0.87);
   line-height: 1.4;
+}
+
+.countdown-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 5;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 .bunny-stats {

@@ -1,24 +1,4 @@
-<mat-toolbar color="primary">
-  <span>UVbunny</span>
-  <span class="version">v{{ appVersion }}</span>
-  <span class="spacer"></span>
-  <mat-chip *ngIf="averageHappiness$ | async as avg">
-    Average Happiness: {{ avg }}
-  </mat-chip>
-  <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="User menu">
-    <mat-icon>account_circle</mat-icon>
-  </button>
-        <mat-menu #menu="matMenu">
-          <button mat-menu-item routerLink="/settings">
-            <mat-icon>settings</mat-icon>
-            <span>Configuration</span>
-          </button>
-          <button mat-menu-item (click)="signOut()">
-            <mat-icon>logout</mat-icon>
-            <span>Sign out</span>
-          </button>
-        </mat-menu>
-</mat-toolbar>
+<app-header></app-header>
 
 <div class="dashboard-container">
   <div class="bunnies-grid">
@@ -28,6 +8,14 @@
       [style.border-color]="getBunnyBorderColor(bunny.colorClass)"
       (click)="viewBunny(bunny.id!)"
       [attr.aria-label]="'View ' + bunny.name + ' details'">
+      <button
+        mat-icon-button
+        class="delete-button"
+        (click)="deleteBunny($event, bunny)"
+        [attr.aria-label]="'Delete ' + bunny.name"
+        title="Delete bunny">
+        <mat-icon>close</mat-icon>
+      </button>
       <mat-card-content class="bunny-card-content">
         <div class="bunny-icon-wrapper">
           <img
@@ -36,6 +24,9 @@
             class="bunny-icon" />
         </div>
         <h3 class="bunny-name">{{ bunny.name }}</h3>
+        <div *ngIf="isNewlyCreated(bunny)" class="countdown-badge">
+          {{ getCountdown(bunny) }}
+        </div>
         <div class="bunny-stats">
           <p class="happiness-label">Happiness: {{ bunny.happiness }}</p>
           <mat-progress-bar

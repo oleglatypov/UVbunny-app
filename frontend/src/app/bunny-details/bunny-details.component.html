@@ -1,0 +1,86 @@
+<app-header [showBackButton]="true" [backRoute]="'/'"></app-header>
+
+<div class="details-container">
+  <mat-card *ngIf="bunny" class="bunny-details-card">
+    <mat-card-header class="bunny-header">
+      <div class="bunny-header-content">
+        <div class="bunny-icon-section">
+          <img
+            [src]="getBunnyIcon(bunny)"
+            [alt]="bunny.name + ' icon'"
+            class="bunny-details-icon" />
+        </div>
+        <div class="bunny-info-section">
+          <mat-card-title class="bunny-name">{{ bunny.name }}</mat-card-title>
+          <mat-card-subtitle class="bunny-subtitle">
+            <div class="happiness-row">
+              <span class="happiness-value">Happiness: {{ bunny.happiness }}</span>
+              <span *ngIf="config$ | async as config" class="points-per-carrot">
+                ({{ config.pointsPerCarrot }} pts/carrot)
+              </span>
+            </div>
+            <mat-progress-bar
+              mode="determinate"
+              [value]="bunny.progressBarPercent ?? 0"
+              [color]="getProgressColor(bunny.mood)"
+              class="happiness-progress"
+              [attr.aria-label]="'Happiness: ' + (bunny.progressBarPercent ?? 0) + '%'">
+            </mat-progress-bar>
+          </mat-card-subtitle>
+        </div>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="give-carrots-section">
+        <h3 class="section-title">Give Carrots 🥕</h3>
+        <div class="give-carrots">
+          <mat-form-field appearance="outline" class="carrots-input">
+            <mat-label>Carrots (1-50)</mat-label>
+            <input
+              matInput
+              type="number"
+              [(ngModel)]="carrotsToGive"
+              min="1"
+              max="50"
+              aria-label="Number of carrots to give" />
+          </mat-form-field>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="giveCarrots()"
+            [disabled]="loading || !carrotsToGive || carrotsToGive < 1 || carrotsToGive > 50"
+            aria-label="Give carrots">
+            <mat-icon>favorite</mat-icon>
+            Give Carrots
+          </button>
+        </div>
+      </div>
+
+      <mat-divider class="divider"></mat-divider>
+
+      <div class="events-section">
+        <h3 class="section-title">Recent Events</h3>
+        <div *ngIf="loading" class="loading">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+        <div *ngIf="!loading && events.length === 0" class="no-events">
+          <mat-icon class="no-events-icon">event_busy</mat-icon>
+          <p>No events yet. Give some carrots!</p>
+        </div>
+        <div *ngFor="let event of events" class="event-item">
+          <div class="event-content">
+            <mat-icon class="event-icon">local_dining</mat-icon>
+            <div class="event-details">
+              <p class="event-text">
+                <strong>{{ event.carrots }}</strong> carrot{{ event.carrots > 1 ? 's' : '' }} given
+              </p>
+              <p class="event-date">{{ event.createdAt | date: 'short' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+

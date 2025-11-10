@@ -73,17 +73,37 @@ import { BunnyColor } from '../types';
     </mat-dialog-actions>
   `,
   styles: [`
+    :host {
+      display: block;
+    }
+
+    h2[mat-dialog-title] {
+      margin: 0;
+      padding: 24px 24px 16px 24px;
+      font-size: 20px;
+      font-weight: 500;
+    }
+
     mat-dialog-content {
       min-width: 400px;
-      padding: 1rem 0;
+      padding: 0 24px 8px 24px;
+      margin: 0;
     }
+
     .full-width {
       width: 100%;
       margin-bottom: 1rem;
     }
+
     mat-dialog-actions {
-      padding: 1rem 0;
+      margin: 0;
+      padding: 8px 16px 16px 16px;
+      min-height: 52px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
     }
+
     mat-form-field {
       margin-bottom: 0.5rem;
     }

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, collectionData, addDoc, query, serverTimestamp } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, addDoc, query, serverTimestamp, doc, deleteDoc, orderBy } from '@angular/fire/firestore';
 import { Auth, authState } from '@angular/fire/auth';
 import { Observable, of, combineLatest, map, switchMap, shareReplay } from 'rxjs';
 import { Bunny, BunnyWithHappiness, BunnyColor } from '../types';
@@ -35,14 +35,12 @@ export class BunniesService {
       switchMap((uid) => {
         if (!uid) return of([] as any[]);
         const bunniesRef = collection(this.firestore, getBunniesCollectionPath(uid));
-        // In AngularFire 20, collectionData requires a Query, not a CollectionReference
-        // We must wrap the CollectionReference in query() to create a Query
-        // Note: query() without parameters creates a query that returns all documents
-        const bunniesQuery = query(bunniesRef);
+        // Sort by createdAt descending (newest first)
+        const bunniesQuery = query(bunniesRef, orderBy('createdAt', 'desc'));
         return collectionData(bunniesQuery, { idField: 'id' });
       }),
     ),
-    this.config.config$, // { pointsPerCarrot, maxHappinessPoints? }
+    this.config.config$,
   ]).pipe(
     map(([raw, cfg]: any[]) => {
       const pointsPerCarrot = cfg?.pointsPerCarrot ?? 3;
@@ -92,6 +90,19 @@ export class BunniesService {
       createdAt: serverTimestamp(),
     });
     return docRef.id;
+  }
+
+  /**
+   * Delete a bunny from Firestore
+   * Note: Cloud Function onBunnyDeleteCascade will handle deleting associated events
+   */
+  async deleteBunny(bunnyId: string): Promise<void> {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('User not authenticated');
+
+    const bunnyRef = doc(this.firestore, getBunniesCollectionPath(user.uid), bunnyId);
+    await deleteDoc(bunnyRef);
+    // Reactive stream will automatically update via collectionData
   }
 
   /** Mood buckets based on absolute happiness points (not percent) */

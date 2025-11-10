@@ -7,18 +7,24 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDividerModule } from '@angular/material/divider';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, Observable } from 'rxjs';
 import { BunnyDetailsService } from '../services/bunny-details.service';
 import { BunniesService } from '../services/bunnies.service';
 import { ConfigService } from '../services/config.service';
-import { CarrotEvent, BunnyWithHappiness } from '../types';
+import { CarrotEvent, BunnyWithHappiness, BunnyColor, UserConfig } from '../types';
+import { HeaderComponent } from '../shared/header.component';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'app-bunny-details',
   standalone: true,
   imports: [
     CommonModule,
+    AsyncPipe,
     RouterModule,
     MatCardModule,
     MatButtonModule,
@@ -26,95 +32,21 @@ import { CarrotEvent, BunnyWithHappiness } from '../types';
     MatInputModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
+    MatProgressBarModule,
+    MatIconModule,
+    MatDividerModule,
     FormsModule,
+    HeaderComponent,
   ],
-  template: `
-    <div class="details-container">
-      <mat-card *ngIf="bunny">
-        <mat-card-header>
-          <mat-card-title>{{ bunny.name }}</mat-card-title>
-          <mat-card-subtitle>Happiness: {{ bunny.happiness }}%</mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="give-carrots">
-            <mat-form-field>
-              <mat-label>Carrots (1-50)</mat-label>
-              <input
-                matInput
-                type="number"
-                [(ngModel)]="carrotsToGive"
-                min="1"
-                max="50"
-                aria-label="Number of carrots to give" />
-            </mat-form-field>
-            <button
-              mat-raised-button
-              color="primary"
-              (click)="giveCarrots()"
-              [disabled]="loading || !carrotsToGive || carrotsToGive < 1 || carrotsToGive > 50"
-              aria-label="Give carrots">
-              Give Carrots
-            </button>
-          </div>
-
-          <div class="events-section">
-            <h3>Recent Events</h3>
-            <div *ngIf="loading" class="loading">
-              <mat-spinner diameter="40"></mat-spinner>
-            </div>
-            <div *ngIf="!loading && events.length === 0" class="no-events">
-              No events yet. Give some carrots!
-            </div>
-            <div *ngFor="let event of events" class="event-item">
-              <p>
-                <strong>{{ event.carrots }}</strong> carrot{{ event.carrots > 1 ? 's' : '' }} given
-                on {{ event.createdAt | date: 'short' }}
-              </p>
-            </div>
-          </div>
-        </mat-card-content>
-        <mat-card-actions>
-          <button mat-button routerLink="/" aria-label="Back to dashboard">Back</button>
-        </mat-card-actions>
-      </mat-card>
-    </div>
-  `,
-  styles: [`
-    .details-container {
-      padding: 2rem;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    .give-carrots {
-      display: flex;
-      gap: 1rem;
-      align-items: flex-end;
-      margin-bottom: 2rem;
-    }
-    .events-section {
-      margin-top: 2rem;
-    }
-    .event-item {
-      padding: 0.5rem;
-      border-bottom: 1px solid #eee;
-    }
-    .loading {
-      display: flex;
-      justify-content: center;
-      padding: 2rem;
-    }
-    .no-events {
-      text-align: center;
-      color: #666;
-      padding: 2rem;
-    }
-  `],
+  templateUrl: './bunny-details.component.html',
+  styleUrls: ['./bunny-details.component.scss'],
 })
 export class BunnyDetailsComponent implements OnInit, OnDestroy {
   bunny: BunnyWithHappiness | null = null;
   events: CarrotEvent[] = [];
   carrotsToGive = 1;
   loading = false;
+  config$: Observable<UserConfig | null>;
   private destroy$ = new Subject<void>();
   private bunnyId: string | null = null;
 
@@ -125,7 +57,10 @@ export class BunnyDetailsComponent implements OnInit, OnDestroy {
     private bunniesService: BunniesService,
     private configService: ConfigService,
     private snackBar: MatSnackBar,
-  ) {}
+  ) {
+    // Expose config$ observable for template
+    this.config$ = this.configService.config$;
+  }
 
   ngOnInit(): void {
     this.bunnyId = this.route.snapshot.paramMap.get('id');
@@ -181,6 +116,21 @@ export class BunnyDetailsComponent implements OnInit, OnDestroy {
         });
       },
     });
+  }
+
+  getBunnyIcon(bunny: BunnyWithHappiness): string {
+    return `assets/icons/bunny_${bunny.mood}_${bunny.colorClass}.svg`;
+  }
+
+  getProgressColor(mood: 'sad' | 'average' | 'happy'): string {
+    switch (mood) {
+      case 'sad':
+        return 'warn';
+      case 'happy':
+        return 'primary';
+      default:
+        return 'accent';
+    }
   }
 
   private loadEvents(): void {

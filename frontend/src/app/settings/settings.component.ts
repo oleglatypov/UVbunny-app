@@ -6,12 +6,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatIconModule } from '@angular/material/icon';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatDividerModule } from '@angular/material/divider';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { ConfigService } from '../services/config.service';
 import { UserConfig } from '../types';
+import { HeaderComponent } from '../shared/header.component';
 
 @Component({
   selector: 'app-settings',
@@ -24,9 +24,9 @@ import { UserConfig } from '../types';
     MatSnackBarModule,
     MatSliderModule,
     MatIconModule,
-    MatToolbarModule,
     MatDividerModule,
     FormsModule,
+    HeaderComponent,
   ],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss'],

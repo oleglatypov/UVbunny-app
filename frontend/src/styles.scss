@@ -1,5 +1,36 @@
 /* You can add global styles to this file, and also import other style files */
 
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: #f5f5f5; /* Light grey background */
+}
+
+/* Material Dialog Container Padding */
+.mat-mdc-dialog-container .mdc-dialog__surface {
+  padding: 0 !important;
+}
+
+.mat-mdc-dialog-container {
+  --mdc-dialog-container-shape: 8px;
+}
+
+.mat-mdc-dialog-container .mat-mdc-dialog-surface {
+  padding: 0;
+}
+
+mat-dialog-container {
+  padding: 0 !important;
+}
+
+/* Material Card Hover Animation */
+mat-card {
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-2px);
+  }
+}
 

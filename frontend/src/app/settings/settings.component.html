@@ -1,10 +1,4 @@
-<mat-toolbar color="primary">
-  <button mat-icon-button routerLink="/" aria-label="Back to dashboard">
-    <mat-icon>arrow_back</mat-icon>
-  </button>
-  <span>Configuration</span>
-  <span class="spacer"></span>
-</mat-toolbar>
+<app-header [showBackButton]="true" [backRoute]="'/'"></app-header>
 
 <div class="settings-container">
   <mat-card class="config-card">

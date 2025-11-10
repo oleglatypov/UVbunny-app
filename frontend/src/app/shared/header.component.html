@@ -1,0 +1,29 @@
+<mat-toolbar color="primary">
+  <button
+    *ngIf="showBackButton"
+    mat-icon-button
+    (click)="goBack()"
+    aria-label="Go back">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+  <span>UVbunny</span>
+  <span class="version">v{{ appVersion }}</span>
+  <span class="spacer"></span>
+  <mat-chip *ngIf="averageHappiness$ | async as avg">
+    Average Happiness: {{ avg }}
+  </mat-chip>
+  <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="User menu">
+    <mat-icon>account_circle</mat-icon>
+  </button>
+  <mat-menu #menu="matMenu">
+    <button mat-menu-item routerLink="/settings">
+      <mat-icon>settings</mat-icon>
+      <span>Configuration</span>
+    </button>
+    <button mat-menu-item (click)="signOut()">
+      <mat-icon>logout</mat-icon>
+      <span>Sign out</span>
+    </button>
+  </mat-menu>
+</mat-toolbar>
+

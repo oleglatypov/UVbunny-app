@@ -1,22 +1,21 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, AsyncPipe } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
 import { Subject, takeUntil, Observable } from 'rxjs';
 import { BunniesService } from '../services/bunnies.service';
-import { ConfigService } from '../services/config.service';
-import { AuthService } from '../services/auth.service';
 import { BunnyWithHappiness, BunnyColor } from '../types';
 import { AddBunnyDialogComponent } from './add-bunny-dialog.component';
-import { environment } from '../../environments/environment';
+import { DeleteBunnyDialogComponent } from './delete-bunny-dialog.component';
+import { HeaderComponent } from '../shared/header.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -27,12 +26,13 @@ import { environment } from '../../environments/environment';
     RouterModule,
     MatCardModule,
     MatProgressBarModule,
-    MatToolbarModule,
     MatChipsModule,
     MatIconModule,
     MatButtonModule,
     MatMenuModule,
     MatSnackBarModule,
+    MatDialogModule,
+    HeaderComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
@@ -40,28 +40,33 @@ import { environment } from '../../environments/environment';
 export class DashboardComponent implements OnInit, OnDestroy {
   // Use reactive observables directly in template with async pipe
   bunnies$!: Observable<BunnyWithHappiness[]>;
-  averageHappiness$!: Observable<number>;
-  appVersion = environment.version;
   private destroy$ = new Subject<void>();
+  private countdownInterval: any;
 
   constructor(
     private bunniesService: BunniesService,
-    private configService: ConfigService,
-    private authService: AuthService,
     private router: Router,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
     // Initialize reactive streams after constructor
     this.bunnies$ = this.bunniesService.bunnies$;
-    this.averageHappiness$ = this.bunniesService.averageHappiness$;
+    
+    // Start countdown timer that updates every second
+    this.countdownInterval = setInterval(() => {
+      this.cdr.detectChanges();
+    }, 1000);
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+    }
   }
 
   viewBunny(id: string): void {
@@ -91,15 +96,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-  signOut(): void {
-    this.authService.signOut().subscribe({
-      error: (error) => {
-        this.snackBar.open('Error signing out: ' + error.message, 'Close', {
-          duration: 5000,
-        });
-      },
-    });
-  }
 
   getBunnyIcon(bunny: BunnyWithHappiness): string {
     // Placeholder - will use actual SVG icons from assets
@@ -127,6 +123,77 @@ export class DashboardComponent implements OnInit, OnDestroy {
       white: '#E0E0E0', // Light gray for better visibility on white background
     };
     return colorMap[colorClass] || '#CFCFD6';
+  }
+
+  async deleteBunny(event: Event, bunny: BunnyWithHappiness): Promise<void> {
+    // Prevent card click event from firing
+    event.stopPropagation();
+
+    // Open Material confirmation dialog
+    const dialogRef = this.dialog.open(DeleteBunnyDialogComponent, {
+      width: '450px',
+      disableClose: false,
+      data: { bunnyName: bunny.name },
+    });
+
+    dialogRef.afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (confirmed: boolean) => {
+        if (!confirmed) {
+          return;
+        }
+
+        try {
+          if (!bunny.id) {
+            throw new Error('Bunny ID is missing');
+          }
+
+          await this.bunniesService.deleteBunny(bunny.id);
+          this.snackBar.open(`${bunny.name} has been deleted 🐇`, 'Close', {
+            duration: 3000,
+          });
+          // No need to reload - reactive stream will update automatically
+        } catch (error: any) {
+          this.snackBar.open('Error deleting bunny: ' + error.message, 'Close', {
+            duration: 5000,
+          });
+        }
+      });
+  }
+
+  /**
+   * Check if bunny was created within the last 60 seconds (newly created)
+   */
+  isNewlyCreated(bunny: BunnyWithHappiness): boolean {
+    if (!bunny.createdAt) return false;
+    const now = new Date().getTime();
+    const createdAt = bunny.createdAt.getTime();
+    const secondsSinceCreation = Math.floor((now - createdAt) / 1000);
+    return secondsSinceCreation < 60;
+  }
+
+  /**
+   * Get countdown display for newly created bunny
+   * Returns "1m" for first minute, then "59", "58", etc.
+   */
+  getCountdown(bunny: BunnyWithHappiness): string {
+    if (!bunny.createdAt) return '';
+    const now = new Date().getTime();
+    const createdAt = bunny.createdAt.getTime();
+    const secondsSinceCreation = Math.floor((now - createdAt) / 1000);
+    
+    if (secondsSinceCreation >= 60) {
+      return ''; // No countdown after 60 seconds
+    }
+    
+    const secondsRemaining = 60 - secondsSinceCreation;
+    
+    // Show "1m" for the first second, then countdown from 59
+    if (secondsRemaining === 60) {
+      return '1m';
+    }
+    
+    return secondsRemaining.toString();
   }
 
 }
