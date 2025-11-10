@@ -356,18 +356,6 @@ firebase deploy --only firestore:rules --project uvbunny-app-477814-afe6d
 ./scripts/destroy.sh dev --confirm
 ```
 
-⚠️ **Warning**: This will delete Cloud Functions and optionally the Hosting site. Firestore data must be deleted manually from the Firebase Console.
-
-## 🌐 Project URLs
-
-After deployment:
-
-- **Hosting**: https://uvbunny-app-477814-afe6d.web.app
-- **Alternate URL**: https://uvbunny-app-477814-afe6d.firebaseapp.com
-- **Firebase Console**: https://console.firebase.google.com/project/uvbunny-app-477814-afe6d/overview
-- **Functions**: https://console.firebase.google.com/project/uvbunny-app-477814-afe6d/functions
-- **Firestore**: https://console.firebase.google.com/project/uvbunny-app-477814-afe6d/firestore
-
 ## 🔧 Development Workflow
 
 ### Environment Configuration
