@@ -1,0 +1,110 @@
+<mat-toolbar color="primary">
+  <button mat-icon-button routerLink="/" aria-label="Back to dashboard">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+  <span>Configuration</span>
+  <span class="spacer"></span>
+</mat-toolbar>
+
+<div class="settings-container">
+  <mat-card class="config-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">psychology</mat-icon>
+        Bunny Psychology Configuration
+      </mat-card-title>
+      <mat-card-subtitle>
+        Adjust how happiness points are calculated as our understanding of bunny psychology advances
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="config-section">
+        <div class="config-label-row">
+          <label for="points-slider" class="config-label">
+            <mat-icon class="label-icon">emoji_events</mat-icon>
+            Points per Carrot
+          </label>
+          <div class="current-value">
+            <span class="value-display">{{ pointsPerCarrot ?? '...' }}</span>
+            <span class="value-unit">points</span>
+          </div>
+        </div>
+
+        <mat-slider
+          *ngIf="!configLoading && pointsPerCarrot !== null"
+          id="points-slider"
+          class="points-slider"
+          [min]="1"
+          [max]="10"
+          [step]="1"
+          [discrete]="true"
+          [showTickMarks]="true"
+          aria-label="Points per carrot">
+          <input matSliderThumb [value]="pointsPerCarrot!" (valueChange)="onSliderChange($event)" />
+        </mat-slider>
+        
+        <div *ngIf="configLoading" class="loading-placeholder">
+          <p>Loading configuration...</p>
+        </div>
+
+        <div class="slider-labels">
+          <span class="slider-label">1 (Low)</span>
+          <span class="slider-label">5 (Medium)</span>
+          <span class="slider-label">10 (High)</span>
+        </div>
+      </div>
+
+      <mat-divider class="divider"></mat-divider>
+
+      <div class="impact-section">
+        <h3 class="impact-title">
+          <mat-icon class="impact-icon">info</mat-icon>
+          Impact Preview
+        </h3>
+        <div class="impact-grid" *ngIf="!configLoading && pointsPerCarrot !== null">
+          <div class="impact-card">
+            <div class="impact-value">{{ pointsPerCarrot }}</div>
+            <div class="impact-label">Points per carrot</div>
+          </div>
+          <div class="impact-card">
+            <div class="impact-value">{{ pointsPerCarrot * 10 }}</div>
+            <div class="impact-label">Happiness for 10 carrots</div>
+          </div>
+          <div class="impact-card">
+            <div class="impact-value">{{ pointsPerCarrot * 100 }}</div>
+            <div class="impact-label">Happiness for 100 carrots</div>
+          </div>
+        </div>
+        <p class="impact-note">
+          <mat-icon class="note-icon">lightbulb</mat-icon>
+          This setting affects all bunnies. Changes will be applied immediately to happiness calculations.
+        </p>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions class="actions">
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="saveSettings()"
+        [disabled]="loading || configLoading || !isValid()"
+        aria-label="Save configuration">
+        <mat-icon>save</mat-icon>
+        <span>Save Configuration</span>
+      </button>
+      <button
+        mat-button
+        (click)="resetToDefault()"
+        [disabled]="loading || configLoading || pointsPerCarrot === 3 || pointsPerCarrot === null"
+        aria-label="Reset to default">
+        <mat-icon>refresh</mat-icon>
+        <span>Reset to Default (3)</span>
+      </button>
+      <button mat-button routerLink="/" aria-label="Cancel and go back">
+        Cancel
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>
+

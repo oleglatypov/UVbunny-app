@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    /**
+     * Helper function to check if the request is from the owner
+     */
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    /**
+     * User config
+     */
+    match /users/{uid}/config/current {
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid) &&
+        request.resource.data.pointsPerCarrot is int &&
+        request.resource.data.pointsPerCarrot >= 1 &&
+        request.resource.data.pointsPerCarrot <= 10;
+    }
+
+    /**
+     * Bunnies collection
+     */
+    match /users/{uid}/bunnies/{bunnyId} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() >= 1 &&
+        request.resource.data.name.size() <= 40 &&
+        request.resource.data.eventCount == 0 &&
+        request.resource.data.colorClass is string &&
+        request.resource.data.createdAt is timestamp;
+      
+      allow update: if isOwner(uid) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() >= 1 &&
+        request.resource.data.name.size() <= 40 &&
+        // eventCount must be monotonic non-decreasing
+        request.resource.data.eventCount >= resource.data.eventCount;
+      
+      allow delete: if isOwner(uid);
+    }
+
+    /**
+     * Events collection (immutable after creation)
+     */
+    match /users/{uid}/bunnies/{bunnyId}/events/{eventId} {
+      allow read: if isOwner(uid);
+      
+      allow create: if isOwner(uid) &&
+        request.resource.data.type == "CARROT_GIVEN" &&
+        request.resource.data.carrots is int &&
+        request.resource.data.carrots >= 1 &&
+        request.resource.data.carrots <= 50 &&
+        request.resource.data.createdAt == request.time &&
+        (!('source' in request.resource.data) || 
+         (request.resource.data.source == 'ui' || request.resource.data.source == 'function')) &&
+        (!('notes' in request.resource.data) || 
+         request.resource.data.notes is string);
+      
+      // Events are immutable - no updates allowed
+      allow update: if false;
+      
+      // Allow delete for cascade cleanup
+      allow delete: if isOwner(uid);
+    }
+
+    /**
+     * Global stats collection (optional cache for analytics)
+     */
+    match /users/{uid}/stats/global {
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid) &&
+        request.resource.data.avgHappiness is number &&
+        request.resource.data.updatedAt is timestamp;
+    }
+  }
+}
+

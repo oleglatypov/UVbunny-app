@@ -1,0 +1,80 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+*.lcov
+
+# Production / Build artifacts
+dist/
+build/
+*.js.map
+**/lib/
+lib/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.dev
+.env.production
+# Keep .env.example for reference
+!.env.example
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+*.cache
+
+# Terraform (removed - using Firebase CLI only)
+# .terraform/
+# *.tfstate
+# *.tfstate.*
+# .terraform.lock.hcl
+
+# Angular
+.angular/
+
+# Environment files (auto-generated from .env files)
+# Ignore all environment files except the sample template
+frontend/src/environments/environment.ts
+frontend/src/environments/environment.local.ts
+frontend/src/environments/environment.dev.ts
+frontend/src/environments/environment.prod.ts
+# Keep sample/template files (handle both naming variations)
+!frontend/src/environments/environment-sample.ts
+!frontend/src/environments/environmen-sample.ts
+
+# Service account keys and credentials (NEVER commit these)
+**/service-account*.json
+**/*credentials*.json
+**/*.pem
+**/*.key
+**/google-services.json
+**/GoogleService-Info.plist
+
+
+

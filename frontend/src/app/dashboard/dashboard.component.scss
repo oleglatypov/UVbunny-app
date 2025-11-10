@@ -1,0 +1,160 @@
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.version {
+  font-size: 0.875rem;
+  opacity: 0.8;
+  margin-left: 0.5rem;
+  font-weight: 400;
+}
+
+.bunnies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  width: 100%;
+}
+
+.bunny-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 3px solid;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15), 0 6px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.bunny-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem !important;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.bunny-icon-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.bunny-icon {
+  width: 70%;
+  height: auto;
+  max-width: 180px;
+  object-fit: contain;
+}
+
+.bunny-name {
+  font-size: 1.5rem;
+  font-weight: 300;
+  margin: 0.5rem 0 1rem 0;
+  text-align: center;
+  clear: both;
+  color: rgba(0, 0, 0, 0.87);
+  line-height: 1.4;
+}
+
+.bunny-stats {
+  width: 100%;
+  margin-top: auto;
+}
+
+.happiness-label {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  color: rgba(0, 0, 0, 0.6);
+  font-weight: 400;
+}
+
+mat-progress-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+}
+
+.add-bunny-card {
+  cursor: pointer;
+  border: 3px dashed #ccc !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+
+  &:hover {
+    border-color: #999 !important;
+    background-color: rgba(0, 0, 0, 0.02);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  }
+}
+
+.add-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.add-icon {
+  font-size: 4rem;
+  width: 4rem;
+  height: 4rem;
+  color: #999;
+}
+
+.add-content p {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #666;
+  font-weight: 400;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+
+  .bunnies-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .bunny-name {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .bunnies-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

@@ -1,0 +1,59 @@
+<mat-toolbar color="primary">
+  <span>UVbunny</span>
+  <span class="version">v{{ appVersion }}</span>
+  <span class="spacer"></span>
+  <mat-chip *ngIf="averageHappiness$ | async as avg">
+    Average Happiness: {{ avg }}
+  </mat-chip>
+  <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="User menu">
+    <mat-icon>account_circle</mat-icon>
+  </button>
+        <mat-menu #menu="matMenu">
+          <button mat-menu-item routerLink="/settings">
+            <mat-icon>settings</mat-icon>
+            <span>Configuration</span>
+          </button>
+          <button mat-menu-item (click)="signOut()">
+            <mat-icon>logout</mat-icon>
+            <span>Sign out</span>
+          </button>
+        </mat-menu>
+</mat-toolbar>
+
+<div class="dashboard-container">
+  <div class="bunnies-grid">
+    <mat-card
+      *ngFor="let bunny of bunnies$ | async"
+      class="bunny-card"
+      [style.border-color]="getBunnyBorderColor(bunny.colorClass)"
+      (click)="viewBunny(bunny.id!)"
+      [attr.aria-label]="'View ' + bunny.name + ' details'">
+      <mat-card-content class="bunny-card-content">
+        <div class="bunny-icon-wrapper">
+          <img
+            [src]="getBunnyIcon(bunny)"
+            [alt]="bunny.name + ' icon'"
+            class="bunny-icon" />
+        </div>
+        <h3 class="bunny-name">{{ bunny.name }}</h3>
+        <div class="bunny-stats">
+          <p class="happiness-label">Happiness: {{ bunny.happiness }}</p>
+          <mat-progress-bar
+            mode="determinate"
+            [value]="bunny.progressBarPercent ?? 0"
+            [color]="getProgressColor(bunny.mood)"
+            [attr.aria-label]="'Happiness: ' + (bunny.progressBarPercent ?? 0) + '%'">
+          </mat-progress-bar>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="add-bunny-card" (click)="openAddBunnyDialog()" aria-label="Add new bunny">
+      <mat-card-content class="add-content">
+        <mat-icon class="add-icon">add</mat-icon>
+        <p>Add Bunny</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+

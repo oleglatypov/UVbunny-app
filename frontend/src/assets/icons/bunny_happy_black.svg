@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <g stroke="#EAEAEA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M40 22c-10 0-16 12-11 26 5 14 16 6 16-9 0-8-2-17-5-17z" fill="#222222"/>
+    <path d="M40 22c-8 1-9 13-6 20 3 8 10 4 10-5 0-7-1-14-4-15z" fill="#BF6F89"/>
+    <path d="M88 22c10 0 16 12 11 26-5 14-16 6-16-9 0-8 2-17 5-17z" fill="#222222"/>
+    <path d="M88 22c8 1 9 13 6 20-3 8-10 4-10-5 0-7 1-14 4-15z" fill="#BF6F89"/>
+    <ellipse cx="64" cy="76" rx="38" ry="32" fill="#222222"/>
+    <circle cx="49" cy="73" r="4.2" fill="#EAEAEA"/>
+    <circle cx="79" cy="73" r="4.2" fill="#EAEAEA"/>
+    <path d="M60 82c0-2 2-4 4-4s4 2 4 4c0 2-2 4-4 4s-4-2-4-4z" fill="#FF9BA3"/>
+    <!-- Happy mouth: upward smile (original) -->
+    <path d="M50 96 q14 8 28 0" fill="none" stroke="#EAEAEA" stroke-width="3"/>
+  </g>
+</svg>
+
