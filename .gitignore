@@ -38,6 +38,9 @@ lerna-debug.log*
 *.swo
 *~
 
+# Cursor IDE rules (local development only)
+.cursor/rules/
+
 # OS
 .DS_Store
 Thumbs.db
