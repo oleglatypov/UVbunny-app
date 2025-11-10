@@ -91,7 +91,16 @@ UVbunny-app/
 
 Before you begin, ensure you have:
 
-- **Node.js 20+** (check with `node --version`)
+- **Node.js 20.19.0+ or 22.12.0+** (check with `node --version`)
+  - ⚠️ **Important:** Angular 20 requires Node.js 20.19.0+ or 22.12.0+
+  - If you're using Node.js 18 or earlier, upgrade using:
+    ```bash
+    # Using nvm (recommended)
+    nvm install 20
+    nvm use 20
+    
+    # Or download from https://nodejs.org/
+    ```
 - **npm** (comes with Node.js)
 - **Firebase CLI** (`npm install -g firebase-tools`)
 - **Firebase Account** with Blaze Plan (required for Cloud Functions)

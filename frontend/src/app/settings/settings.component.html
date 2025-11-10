@@ -25,22 +25,25 @@
           </div>
         </div>
 
-        <mat-slider
-          *ngIf="!configLoading && pointsPerCarrot !== null"
-          id="points-slider"
-          class="points-slider"
-          [min]="1"
-          [max]="10"
-          [step]="1"
-          [discrete]="true"
-          [showTickMarks]="true"
-          aria-label="Points per carrot">
-          <input matSliderThumb [value]="pointsPerCarrot!" (valueChange)="onSliderChange($event)" />
-        </mat-slider>
+        @if (!configLoading && pointsPerCarrot !== null) {
+          <mat-slider
+            id="points-slider"
+            class="points-slider"
+            [min]="1"
+            [max]="10"
+            [step]="1"
+            [discrete]="true"
+            [showTickMarks]="true"
+            aria-label="Points per carrot">
+            <input matSliderThumb [value]="pointsPerCarrot!" (valueChange)="onSliderChange($event)" />
+          </mat-slider>
+        }
         
-        <div *ngIf="configLoading" class="loading-placeholder">
-          <p>Loading configuration...</p>
-        </div>
+        @if (configLoading) {
+          <div class="loading-placeholder">
+            <p>Loading configuration...</p>
+          </div>
+        }
 
         <div class="slider-labels">
           <span class="slider-label">1 (Low)</span>
@@ -56,20 +59,22 @@
           <mat-icon class="impact-icon">info</mat-icon>
           Impact Preview
         </h3>
-        <div class="impact-grid" *ngIf="!configLoading && pointsPerCarrot !== null">
-          <div class="impact-card">
-            <div class="impact-value">{{ pointsPerCarrot }}</div>
-            <div class="impact-label">Points per carrot</div>
+        @if (!configLoading && pointsPerCarrot !== null) {
+          <div class="impact-grid">
+            <div class="impact-card">
+              <div class="impact-value">{{ pointsPerCarrot }}</div>
+              <div class="impact-label">Points per carrot</div>
+            </div>
+            <div class="impact-card">
+              <div class="impact-value">{{ pointsPerCarrot * 10 }}</div>
+              <div class="impact-label">Happiness for 10 carrots</div>
+            </div>
+            <div class="impact-card">
+              <div class="impact-value">{{ pointsPerCarrot * 100 }}</div>
+              <div class="impact-label">Happiness for 100 carrots</div>
+            </div>
           </div>
-          <div class="impact-card">
-            <div class="impact-value">{{ pointsPerCarrot * 10 }}</div>
-            <div class="impact-label">Happiness for 10 carrots</div>
-          </div>
-          <div class="impact-card">
-            <div class="impact-value">{{ pointsPerCarrot * 100 }}</div>
-            <div class="impact-label">Happiness for 100 carrots</div>
-          </div>
-        </div>
+        }
         <p class="impact-note">
           <mat-icon class="note-icon">lightbulb</mat-icon>
           This setting affects all bunnies. Changes will be applied immediately to happiness calculations.
