@@ -6,11 +6,14 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AsyncPipe } from '@angular/common';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { BunniesService } from '../services/bunnies.service';
+import { ThemeService } from '../services/theme.service';
 import { environment } from '../../environments/environment';
 
 @Component({
@@ -24,6 +27,7 @@ import { environment } from '../../environments/environment';
     MatIconModule,
     MatButtonModule,
     MatMenuModule,
+    MatSlideToggleModule,
     MatSnackBarModule,
     AsyncPipe,
   ],
@@ -36,14 +40,24 @@ export class HeaderComponent {
   
   appVersion = environment.version;
   averageHappiness$: Observable<number>;
+  isDarkMode$: Observable<boolean>;
 
   constructor(
     private authService: AuthService,
     private bunniesService: BunniesService,
+    private themeService: ThemeService,
     private router: Router,
     private snackBar: MatSnackBar,
   ) {
     this.averageHappiness$ = this.bunniesService.averageHappiness$;
+    this.isDarkMode$ = this.themeService.theme$.pipe(
+      // Convert Theme to boolean
+      map(theme => theme === 'dark')
+    );
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 
   goBack(): void {

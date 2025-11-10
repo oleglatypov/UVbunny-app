@@ -212,6 +212,88 @@ mat-card-subtitle {
   }
 }
 
+// Dark theme styles for settings page
+:host-context(body.dark-theme) {
+  mat-card-title {
+    color: rgba(255, 255, 255, 0.87) !important;
+  }
+
+  mat-card-subtitle {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  .header-icon {
+    color: #90caf9 !important; // Light blue for dark mode
+  }
+
+  .config-label {
+    color: rgba(255, 255, 255, 0.87) !important;
+  }
+
+  .label-icon {
+    color: #ffb74d !important; // Lighter orange for dark mode
+  }
+
+  .value-display {
+    color: #90caf9 !important; // Light blue for dark mode
+  }
+
+  .value-unit {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  .slider-label {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  .loading-placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  .impact-title {
+    color: rgba(255, 255, 255, 0.87) !important;
+  }
+
+  .impact-icon {
+    color: #64b5f6 !important; // Lighter blue for dark mode
+  }
+
+  .impact-card {
+    background: linear-gradient(135deg, #2c2c2c 0%, #1e1e1e 100%) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+
+    &:hover {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+    }
+  }
+
+  .impact-value {
+    color: #90caf9 !important; // Light blue for dark mode
+  }
+
+  .impact-label {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  .impact-note {
+    background-color: rgba(33, 150, 243, 0.15) !important;
+    border-left-color: #64b5f6 !important;
+    color: rgba(255, 255, 255, 0.87) !important;
+  }
+
+  .note-icon {
+    color: #64b5f6 !important; // Lighter blue for dark mode
+  }
+
+  mat-icon {
+    color: rgba(255, 255, 255, 0.87) !important;
+  }
+
+  mat-divider {
+    border-top-color: rgba(255, 255, 255, 0.12) !important;
+  }
+}
+
 // Responsive adjustments
 @media (max-width: 768px) {
   .settings-container {

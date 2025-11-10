@@ -39,6 +39,10 @@
   &:hover {
     transform: translateY(-6px);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15), 0 6px 12px rgba(0, 0, 0, 0.1);
+
+    .bunny-icon {
+      animation: shake 0.5s ease-in-out infinite;
+    }
   }
 }
 
@@ -139,6 +143,18 @@
   }
   50% {
     transform: scale(1.05);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-8px);
+  }
+  75% {
+    transform: translateX(8px);
   }
 }
 
