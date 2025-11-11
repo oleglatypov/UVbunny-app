@@ -80,18 +80,9 @@ describe('HeaderComponent', () => {
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
   });
 
-  it('should call signOut when signOut is called', () => {
+  it('should navigate to logout page when signOut is called', () => {
     component.signOut();
-    expect(mockAuthService.signOut).toHaveBeenCalled();
-  });
-
-  it('should handle sign out error', () => {
-    mockAuthService.signOut.and.returnValue(throwError(() => new Error('Sign out failed')));
-    component.signOut();
-
-    expect(mockSnackBar.open).toHaveBeenCalledWith('Error signing out: Sign out failed', 'Close', {
-      duration: 5000,
-    });
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/logout']);
   });
 
   it('should toggle theme when toggleTheme is called', () => {

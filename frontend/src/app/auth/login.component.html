@@ -1,0 +1,157 @@
+<div class="login-container">
+  <mat-card class="login-card">
+    <mat-card-header>
+      <mat-card-title>UVbunny 🐇</mat-card-title>
+      <mat-card-subtitle>{{ isSignUp ? 'Create an account' : 'Sign in to manage your bunnies' }}</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Email/Password Form -->
+      <form [formGroup]="emailForm" (ngSubmit)="signInWithEmail()" class="auth-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" placeholder="your@email.com" autocomplete="email" />
+          <mat-icon matPrefix>email</mat-icon>
+          @if (emailControl?.hasError('required') && emailControl?.touched) {
+            <mat-error>Email is required</mat-error>
+          }
+          @if (emailControl?.hasError('email') && emailControl?.touched) {
+            <mat-error>Please enter a valid email</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+          <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" placeholder="••••••" [autocomplete]="isSignUp ? 'new-password' : 'current-password'" />
+          <mat-icon matPrefix>lock</mat-icon>
+          <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hidePassword">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (passwordControl?.hasError('required') && passwordControl?.touched) {
+            <mat-error>Password is required</mat-error>
+          }
+          @if (passwordControl?.hasError('minlength') && passwordControl?.touched) {
+            <mat-error>Password must be at least 6 characters</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          [disabled]="loading || emailForm.invalid"
+          class="full-width auth-button">
+          @if (loading) {
+            <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
+          } @else {
+            <mat-icon>{{ isSignUp ? 'person_add' : 'login' }}</mat-icon>
+            {{ isSignUp ? 'Sign Up' : 'Sign In' }}
+          }
+        </button>
+
+        <button
+          mat-button
+          type="button"
+          (click)="toggleMode()"
+          [disabled]="loading"
+          class="toggle-mode-button">
+          {{ isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up" }}
+        </button>
+      </form>
+
+      <mat-divider class="divider">
+        <span>OR</span>
+      </mat-divider>
+
+      <!-- Google Sign In -->
+      <button
+        mat-raised-button
+        color="accent"
+        (click)="signInWithGoogle()"
+        [disabled]="loading"
+        class="full-width auth-button google-button">
+        <mat-icon>account_circle</mat-icon>
+        Sign in with Google
+      </button>
+    </mat-card-content>
+
+    <!-- Debug Section -->
+    <mat-card-content class="debug-section">
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon>bug_report</mat-icon>
+            <span>Debug: Current Auth User</span>
+          </mat-panel-title>
+          <mat-panel-description>
+            @if (currentUser) {
+              <span class="user-status authenticated">Authenticated</span>
+            } @else {
+              <span class="user-status not-authenticated">Not Authenticated</span>
+            }
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+
+        @if (userData) {
+          <div class="debug-content">
+            <h4>User Information</h4>
+            <div class="debug-field">
+              <strong>UID:</strong> <code>{{ userData.uid }}</code>
+            </div>
+            <div class="debug-field">
+              <strong>Email:</strong> {{ userData.email || 'N/A' }}
+            </div>
+            <div class="debug-field">
+              <strong>Display Name:</strong> {{ userData.displayName || 'N/A' }}
+            </div>
+            <div class="debug-field">
+              <strong>Email Verified:</strong> {{ userData.emailVerified ? 'Yes' : 'No' }}
+            </div>
+            <div class="debug-field">
+              <strong>Is Anonymous:</strong> {{ userData.isAnonymous ? 'Yes' : 'No' }}
+            </div>
+            <div class="debug-field">
+              <strong>Photo URL:</strong> 
+              @if (userData.photoURL) {
+                <a [href]="userData.photoURL" target="_blank">{{ userData.photoURL }}</a>
+              } @else {
+                N/A
+              }
+            </div>
+
+            <h4>Metadata</h4>
+            <div class="debug-field">
+              <strong>Creation Time:</strong> {{ userData.metadata.creationTime }}
+            </div>
+            <div class="debug-field">
+              <strong>Last Sign In:</strong> {{ userData.metadata.lastSignInTime }}
+            </div>
+
+            <h4>Provider Data</h4>
+            @if (userData.providerData && userData.providerData.length > 0) {
+              @for (provider of userData.providerData; track provider.providerId) {
+                <div class="debug-field provider-item">
+                  <strong>Provider:</strong> {{ provider.providerId }}<br>
+                  <strong>UID:</strong> <code>{{ provider.uid }}</code><br>
+                  <strong>Email:</strong> {{ provider.email || 'N/A' }}<br>
+                  <strong>Display Name:</strong> {{ provider.displayName || 'N/A' }}
+                </div>
+              }
+            } @else {
+              <div class="debug-field">No provider data</div>
+            }
+
+            <h4>Raw JSON</h4>
+            <pre class="json-output">{{ userData | json }}</pre>
+          </div>
+        } @else {
+          <div class="debug-content">
+            <p>No authenticated user found.</p>
+            <p class="debug-note">Sign in to see user data here.</p>
+          </div>
+        }
+      </mat-expansion-panel>
+    </mat-card-content>
+  </mat-card>
+</div>
+

@@ -69,13 +69,8 @@ export class HeaderComponent {
   }
 
   signOut(): void {
-    this.authService.signOut().subscribe({
-      error: (error) => {
-        this.snackBar.open('Error signing out: ' + error.message, 'Close', {
-          duration: 5000,
-        });
-      },
-    });
+    // Navigate to logout page which will handle complete cleanup
+    this.router.navigate(['/logout']);
   }
 }
 

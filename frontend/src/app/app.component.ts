@@ -19,18 +19,9 @@ export class AppComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Handle redirect result after Google sign-in
-    this.authService.handleRedirectResult().subscribe({
-      next: (user) => {
-        if (user) {
-          // User successfully signed in, navigate to dashboard
-          this.router.navigate(['/']);
-        }
-      },
-      error: (error) => {
-        console.error('Error handling redirect result:', error);
-      },
-    });
+    // Note: Redirect result handling is done in login.component.ts
+    // getRedirectResult can only be called once, so we let login component handle it
+    // This prevents duplicate calls and ensures proper redirect handling
   }
 }
 
