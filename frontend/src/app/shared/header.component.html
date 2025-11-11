@@ -12,7 +12,7 @@
   <span class="spacer"></span>
   @if (averageHappiness$ | async; as avg) {
     <mat-chip>
-      Average Happiness: {{ avg }}
+      <span style="color: white;">Average Happiness: <strong>{{ avg }}</strong></span>
     </mat-chip>
   }
   <div class="theme-toggle">
