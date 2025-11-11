@@ -29,7 +29,7 @@ export const appRoutes: Routes = [
   },
   {
     path: '**',
-    redirectTo: '',
+    loadComponent: () => import('./not-found/not-found.component').then(m => m.NotFoundComponent),
   },
 ];
 

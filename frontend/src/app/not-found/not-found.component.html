@@ -1,0 +1,36 @@
+<div class="not-found-container">
+  <mat-card class="not-found-card">
+    <mat-card-content class="not-found-content">
+      <div class="bunny-wrapper">
+        <img
+          [src]="getBunnyIcon()"
+          alt="Sad bunny"
+          class="bunny-icon" />
+      </div>
+      <h1 class="error-code">404</h1>
+      <h2 class="error-title">Oops! Bunny Not Found</h2>
+      <p class="error-message">
+        The page you're looking for has hopped away!<br>
+        It might have been moved or doesn't exist anymore.
+      </p>
+      <div class="actions">
+        <button
+          mat-raised-button
+          color="primary"
+          routerLink="/"
+          class="home-button">
+          <mat-icon>home</mat-icon>
+          Go to Dashboard
+        </button>
+        <button
+          mat-button
+          routerLink="/settings"
+          class="settings-button">
+          <mat-icon>settings</mat-icon>
+          Settings
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+
