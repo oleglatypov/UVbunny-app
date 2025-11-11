@@ -1,17 +1,20 @@
 <mat-toolbar color="primary">
-  <button
-    *ngIf="showBackButton"
-    mat-icon-button
-    (click)="goBack()"
-    aria-label="Go back">
-    <mat-icon>arrow_back</mat-icon>
-  </button>
+  @if (showBackButton) {
+    <button
+      mat-icon-button
+      (click)="goBack()"
+      aria-label="Go back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+  }
   <span>UVbunny</span>
   <span class="version">v{{ appVersion }}</span>
   <span class="spacer"></span>
-  <mat-chip *ngIf="averageHappiness$ | async as avg">
-    Average Happiness: {{ avg }}
-  </mat-chip>
+  @if (averageHappiness$ | async; as avg) {
+    <mat-chip>
+      Average Happiness: {{ avg }}
+    </mat-chip>
+  }
   <div class="theme-toggle">
     <mat-icon>light_mode</mat-icon>
     <mat-slide-toggle

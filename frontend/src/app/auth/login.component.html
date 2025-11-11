@@ -43,10 +43,9 @@
           class="full-width auth-button">
           @if (loading) {
             <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
-          } @else {
-            <mat-icon>{{ isSignUp ? 'person_add' : 'login' }}</mat-icon>
-            {{ isSignUp ? 'Sign Up' : 'Sign In' }}
           }
+          <mat-icon [class.hidden]="loading">{{ isSignUp ? 'person_add' : 'login' }}</mat-icon>
+          <span [class.hidden]="loading">{{ isSignUp ? 'Sign Up' : 'Sign In' }}</span>
         </button>
 
         <button
@@ -59,24 +58,26 @@
         </button>
       </form>
 
-      <mat-divider class="divider">
-        <span>OR</span>
-      </mat-divider>
+      @if (false) {
+        <mat-divider class="divider">
+          <span>OR</span>
+        </mat-divider>
 
-      <!-- Google Sign In -->
-      <button
-        mat-raised-button
-        color="accent"
-        (click)="signInWithGoogle()"
-        [disabled]="loading"
-        class="full-width auth-button google-button">
-        <mat-icon>account_circle</mat-icon>
-        Sign in with Google
-      </button>
+        <!-- Google Sign In -->
+        <button
+          mat-raised-button
+          color="accent"
+          (click)="signInWithGoogle()"
+          [disabled]="loading"
+          class="full-width auth-button google-button">
+          <mat-icon>account_circle</mat-icon>
+          Sign in with Google
+        </button>
+      }
     </mat-card-content>
 
     <!-- Debug Section -->
-    <mat-card-content class="debug-section">
+    <!-- <mat-card-content class="debug-section">
       <mat-expansion-panel>
         <mat-expansion-panel-header>
           <mat-panel-title>
@@ -151,7 +152,7 @@
           </div>
         }
       </mat-expansion-panel>
-    </mat-card-content>
+    </mat-card-content> -->
   </mat-card>
 </div>
 

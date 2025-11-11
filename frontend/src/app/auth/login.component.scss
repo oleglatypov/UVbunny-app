@@ -13,6 +13,10 @@
   width: 100%;
 }
 
+.mat-mdc-card-content {
+  margin-top: 16px;
+}
+
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -35,6 +39,10 @@
 
 .button-spinner {
   display: inline-block;
+}
+
+.hidden {
+  display: none !important;
 }
 
 .toggle-mode-button {
