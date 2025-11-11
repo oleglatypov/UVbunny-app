@@ -2,31 +2,33 @@
 
 <div class="dashboard-container">
   <div class="bunnies-grid">
-    <mat-card
-      *ngFor="let bunny of bunnies$ | async"
-      class="bunny-card"
-      [style.border-color]="getBunnyBorderColor(bunny.colorClass)"
-      (click)="viewBunny(bunny.id!)"
-      [attr.aria-label]="'View ' + bunny.name + ' details'">
-      <button
-        mat-icon-button
-        class="delete-button"
-        (click)="deleteBunny($event, bunny)"
-        [attr.aria-label]="'Delete ' + bunny.name"
-        title="Delete bunny">
-        <mat-icon>close</mat-icon>
-      </button>
-      <mat-card-content class="bunny-card-content">
-        <div class="bunny-icon-wrapper">
-          <img
-            [src]="getBunnyIcon(bunny)"
-            [alt]="bunny.name + ' icon'"
-            class="bunny-icon" />
-        </div>
-        <h3 class="bunny-name">{{ bunny.name }}</h3>
-        <div *ngIf="isNewlyCreated(bunny)" class="countdown-badge">
-          {{ getCountdown(bunny) }}
-        </div>
+    @for (bunny of bunnies$ | async; track bunny.id) {
+      <mat-card
+        class="bunny-card"
+        [style.border-color]="getBunnyBorderColor(bunny.colorClass)"
+        (click)="viewBunny(bunny.id!)"
+        [attr.aria-label]="'View ' + bunny.name + ' details'">
+        <button
+          mat-icon-button
+          class="delete-button"
+          (click)="deleteBunny($event, bunny)"
+          [attr.aria-label]="'Delete ' + bunny.name"
+          title="Delete bunny">
+          <mat-icon>close</mat-icon>
+        </button>
+        <mat-card-content class="bunny-card-content">
+          <div class="bunny-icon-wrapper">
+            <img
+              [src]="getBunnyIcon(bunny)"
+              [alt]="bunny.name + ' icon'"
+              class="bunny-icon" />
+          </div>
+          <h3 class="bunny-name">{{ bunny.name }}</h3>
+          @if (isNewlyCreated(bunny)) {
+            <div class="countdown-badge">
+              {{ getCountdown(bunny) }}
+            </div>
+          }
         <div class="bunny-stats">
           <p class="happiness-label">Happiness: {{ bunny.happiness }}</p>
           <mat-progress-bar
@@ -37,7 +39,8 @@
           </mat-progress-bar>
         </div>
       </mat-card-content>
-    </mat-card>
+      </mat-card>
+    }
 
     <mat-card class="add-bunny-card" (click)="openAddBunnyDialog()" aria-label="Add new bunny">
       <mat-card-content class="add-content">
