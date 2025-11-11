@@ -301,22 +301,82 @@ Output: `backend/functions/lib/`
 
 The project includes deployment scripts that handle building and deploying everything:
 
+#### Basic Usage
+
 ```bash
-# Deploy to dev environment
+# Deploy everything to dev environment (default)
 ./scripts/deploy.sh dev
 
-# Deploy to production
+# Deploy everything to production
 ./scripts/deploy.sh prod
+
+# Show help and all available options
+./scripts/deploy.sh --help
 ```
 
-The script will:
+#### Deployment Options
+
+**Frontend-Only Deployment:**
+```bash
+# Deploy only frontend (skip functions and rules) - faster for UI updates
+./scripts/deploy.sh dev --frontend-only
+./scripts/deploy.sh prod --frontend-only
+
+# Short form
+./scripts/deploy.sh dev -f
+```
+
+**Deploy to Preview Channel:**
+```bash
+# Deploy to a preview channel (creates preview URL)
+./scripts/deploy.sh dev --channel preview-123
+./scripts/deploy.sh prod --channel staging
+
+# Short form
+./scripts/deploy.sh dev -c preview-123
+```
+
+**Deploy to Channel with Expiration:**
+```bash
+# Deploy to channel with expiration date
+./scripts/deploy.sh dev --channel preview-123 --expires +7d
+./scripts/deploy.sh prod --channel staging --expires 2024-12-31
+
+# Short form
+./scripts/deploy.sh dev -c preview-123 -e +14d
+```
+
+**Combined Options:**
+```bash
+# Deploy only frontend to a preview channel
+./scripts/deploy.sh dev --frontend-only --channel feature-branch
+
+# Deploy to channel with expiration (frontend-only)
+./scripts/deploy.sh prod -f -c staging -e +30d
+```
+
+#### What the Script Does
+
+The deployment script will:
 1. ✅ Check Node.js version (requires 20+)
-2. ✅ Build Cloud Functions (TypeScript → JavaScript)
+2. ✅ Build Cloud Functions (TypeScript → JavaScript) - *skipped if `--frontend-only`*
 3. ✅ Check/create `.env.dev` or `.env.production`
 4. ✅ Generate environment files from `.env` file
 5. ✅ Build Frontend (production-optimized)
-6. ✅ Deploy Functions, Hosting, and Firestore Rules
-7. ✅ Display deployment URLs
+6. ✅ Deploy Functions, Hosting, and Firestore Rules - *or only Hosting if `--frontend-only`*
+7. ✅ Display deployment URLs (including channel URL if applicable)
+
+#### Channel URLs
+
+When deploying to a channel, you'll get a preview URL:
+- **Channel URL**: `https://uvbunny-app-477814-afe6d--{channel-name}.web.app`
+- **Main URL**: `https://uvbunny-app-477814-afe6d.web.app` (unchanged)
+
+Channels are perfect for:
+- Feature branch previews
+- Staging environments
+- Client reviews
+- Testing before production
 
 ### Manual Deployment
 

@@ -106,6 +106,7 @@ export class BunniesService {
   }
 
   /** Mood buckets based on absolute happiness points (not percent) */
+  //TODO: make this calculated based on current pointsPerCarrot config
   private getMood(happiness: number): 'sad' | 'average' | 'happy' {
     if (happiness < 30) return 'sad'; // < 10 carrots @ 3 points each
     if (happiness >= 70) return 'happy'; // ≥ ~24 carrots
