@@ -14,6 +14,129 @@ UVbunny is a modern web application built with Angular and Firebase that allows 
 
 The application uses an event-sourcing architecture where all carrot-giving events are stored immutably, and happiness is calculated reactively based on current configuration settings.
 
+## 🏗️ Architecture Diagrams
+
+### System Architecture
+
+```mermaid
+graph TB
+    subgraph "User Interface"
+        Browser[Browser<br/>Angular 20 App]
+    end
+
+    subgraph "Frontend Services"
+        AuthService[AuthService<br/>Google Sign-In]
+        BunniesService[BunniesService<br/>Reactive Happiness Calc]
+        ConfigService[ConfigService<br/>Points Per Carrot]
+        BunnyDetailsService[BunnyDetailsService<br/>Carrot Events]
+    end
+
+    subgraph "Firebase Backend"
+        Auth[Firebase Auth<br/>Authentication]
+        Firestore[(Firestore Database<br/>Native Mode)]
+        Functions[Cloud Functions<br/>Node 20]
+    end
+
+    subgraph "Cloud Functions"
+        OnCreate[onCarrotEventCreate<br/>Increment eventCount]
+        OnDelete[onCarrotEventDelete<br/>Decrement eventCount]
+        OnCascade[onBunnyDeleteCascade<br/>Cleanup Events]
+        OnBootstrap[onUserCreateBootstrap<br/>Init Config]
+        OnAnalytics[onBunnyAnalyticsSnapshot<br/>Compute Stats]
+    end
+
+    subgraph "Firestore Collections"
+        Users[users/{uid}]
+        Config[config/current<br/>pointsPerCarrot: 1-10]
+        Bunnies[bunnies/{bunnyId}<br/>eventCount]
+        Events[events/{eventId}<br/>IMMUTABLE<br/>carrots: 1-50]
+    end
+
+    Browser --> AuthService
+    Browser --> BunniesService
+    Browser --> ConfigService
+    Browser --> BunnyDetailsService
+
+    AuthService --> Auth
+    BunniesService --> Firestore
+    ConfigService --> Firestore
+    BunnyDetailsService --> Firestore
+
+    Firestore --> Users
+    Users --> Config
+    Users --> Bunnies
+    Bunnies --> Events
+
+    Events -.trigger.-> OnCreate
+    Events -.trigger.-> OnDelete
+    Bunnies -.trigger.-> OnCascade
+    Users -.trigger.-> OnBootstrap
+    Config -.trigger.-> OnAnalytics
+
+    OnCreate --> Bunnies
+    OnDelete --> Bunnies
+    OnCascade --> Events
+
+    style Events fill:#ffe6e6
+    style OnCreate fill:#e6f3ff
+    style OnDelete fill:#e6f3ff
+    style BunniesService fill:#e6ffe6
+    style ConfigService fill:#e6ffe6
+```
+
+### Data Flow: Giving Carrots
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Angular Component
+    participant Service as BunnyDetailsService
+    participant Firestore
+    participant Function as onCarrotEventCreate
+    participant Stream as bunnies$ Observable
+
+    User->>UI: Click "Give 5 Carrots"
+    UI->>Service: giveCarrots(bunnyId, 5)
+    Service->>Firestore: Create event document<br/>carrots: 5, type: CARROT_GIVEN
+    Firestore-->>Service: Event created
+    
+    Firestore->>Function: Trigger onCarrotEventCreate
+    Function->>Function: Transaction START
+    Function->>Firestore: Read bunny.eventCount
+    Function->>Firestore: Write eventCount += 5
+    Function->>Function: Transaction COMMIT
+    
+    Firestore->>Stream: Emit updated bunny data
+    Stream->>Stream: Recalculate happiness<br/>= eventCount × pointsPerCarrot
+    Stream->>UI: Updated bunny with new happiness
+    UI->>User: Show new happiness value
+```
+
+### Retroactive Happiness Calculation
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Settings as SettingsComponent
+    participant ConfigSvc as ConfigService
+    participant Firestore
+    participant BunniesSvc as BunniesService
+    participant UI as Dashboard
+
+    User->>Settings: Change pointsPerCarrot<br/>from 3 to 5
+    Settings->>ConfigSvc: updatePointsPerCarrot(5)
+    ConfigSvc->>Firestore: Update config/current
+    
+    Firestore->>ConfigSvc: config$ emits new value
+    ConfigSvc->>BunniesSvc: config$ stream updates
+    
+    Note over BunniesSvc: combineLatest triggers<br/>with new config
+    
+    BunniesSvc->>BunniesSvc: Recalculate ALL bunnies<br/>happiness = eventCount × 5
+    BunniesSvc->>UI: bunnies$ emits updated list
+    UI->>User: All happiness values updated<br/>instantly, no DB writes!
+```
+
 ## 🛠️ Tech Stack
 
 - **Frontend:** Angular 20 (standalone APIs, Angular Material, RxJS, AngularFire)
