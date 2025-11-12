@@ -46,10 +46,10 @@ graph TB
     end
 
     subgraph "Firestore Collections"
-        Users[users/{uid}]
-        Config[config/current<br/>pointsPerCarrot: 1-10]
-        Bunnies[bunnies/{bunnyId}<br/>eventCount]
-        Events[events/{eventId}<br/>IMMUTABLE<br/>carrots: 1-50]
+        Users["users/UID"]
+        Config["config/current<br/>pointsPerCarrot: 1-10"]
+        Bunnies["bunnies/ID<br/>eventCount"]
+        Events["events/ID<br/>IMMUTABLE<br/>carrots: 1-50"]
     end
 
     Browser --> AuthService
