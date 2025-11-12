@@ -1,0 +1,216 @@
+// Dark Theme Styles
+// Styles specific to the dark theme
+
+@import 'variables';
+@import 'mixins';
+
+body.dark-theme {
+  background-color: $bunny-bg-dark;
+  color: $bunny-text-dark-primary;
+  
+  // Material theme variables
+  --mdc-theme-primary: #{$material-primary-dark};
+  --mdc-theme-secondary: #{$material-secondary-dark};
+  --mdc-theme-background: #{$bunny-bg-dark};
+  --mdc-theme-surface: #{$bunny-surface-dark};
+  --mdc-theme-on-primary: #000000;
+  --mdc-theme-on-secondary: #000000;
+  --mdc-theme-on-surface: #ffffff;
+  --mdc-theme-on-background: #ffffff;
+}
+
+// Dark theme Material components
+body.dark-theme {
+  // Cards
+  mat-card {
+    background-color: $bunny-surface-dark;
+    color: $bunny-text-dark-primary;
+  }
+  
+  // Toolbar
+  mat-toolbar {
+    background-color: $bunny-primary !important;
+    color: $bunny-text-dark-primary;
+  }
+  
+  // Form fields
+  .mat-mdc-form-field {
+    color: $bunny-text-dark-primary;
+    
+    .mdc-text-field--filled {
+      background-color: $bunny-surface-dark-elevated;
+    }
+    
+    .mdc-text-field--outlined {
+      background-color: transparent;
+      
+      .mdc-notched-outline {
+        border-color: rgba(255, 255, 255, 0.3);
+        background-color: transparent;
+        
+        &--focused {
+          border-color: $material-primary-dark;
+        }
+      }
+    }
+    
+    .mdc-text-field-wrapper {
+      background-color: transparent;
+      color: $bunny-text-dark-primary;
+      
+      .mdc-text-field {
+        background-color: transparent;
+        color: $bunny-text-dark-primary;
+      }
+    }
+    
+    // Input text and labels
+    input,
+    textarea,
+    .mdc-text-field__input {
+      color: $bunny-text-dark-primary !important;
+    }
+    
+    .mdc-floating-label {
+      color: $bunny-text-dark-secondary !important;
+      
+      &--float-above {
+        color: $bunny-text-dark-primary !important;
+      }
+    }
+    
+    .mdc-text-field--focused .mdc-floating-label {
+      color: $material-primary-dark !important;
+    }
+    
+    .mat-mdc-form-field-hint-wrapper,
+    .mat-mdc-form-field-error-wrapper,
+    .mat-mdc-form-field-hint {
+      color: $bunny-text-dark-secondary !important;
+    }
+    
+    .mat-mdc-form-field-error {
+      color: $material-error !important;
+    }
+    
+    // Placeholders
+    input::placeholder,
+    textarea::placeholder,
+    .mdc-text-field__input::placeholder {
+      color: $bunny-text-dark-disabled !important;
+      opacity: 1;
+    }
+  }
+  
+  // Chips
+  mat-chip {
+    background-color: $bunny-surface-dark-elevated;
+    color: $bunny-text-dark-primary;
+  }
+  
+  // Dialogs
+  .mat-mdc-dialog-container {
+    background-color: $bunny-surface-dark;
+    color: $bunny-text-dark-primary;
+  }
+  
+  // Menus
+  .mat-mdc-menu-panel {
+    background-color: $bunny-surface-dark;
+  }
+  
+  .mat-mdc-menu-item {
+    color: $bunny-text-dark-primary;
+    
+    &:hover {
+      background-color: $bunny-surface-dark-elevated;
+    }
+  }
+  
+  // Icons
+  mat-icon {
+    color: $bunny-text-dark-primary;
+  }
+  
+  // Card titles and subtitles
+  mat-card-title,
+  mat-card-subtitle {
+    color: $bunny-text-dark-primary;
+  }
+  
+  // Dividers
+  mat-divider {
+    border-top-color: $bunny-border-dark;
+  }
+  
+  // Buttons
+  button mat-icon {
+    color: inherit;
+  }
+  
+  .mat-mdc-button mat-icon,
+  .mat-mdc-raised-button mat-icon,
+  .mat-mdc-icon-button mat-icon {
+    color: $bunny-text-dark-primary;
+  }
+  
+  // Sliders
+  .mat-mdc-slider {
+    --mdc-slider-handle-color: #{$material-primary-dark};
+    --mdc-slider-focus-handle-color: #{$material-primary-dark};
+    --mdc-slider-hover-handle-color: #{$material-primary-dark};
+    --mdc-slider-active-track-color: #{$material-primary-dark};
+    --mdc-slider-inactive-track-color: rgba(255, 255, 255, 0.3);
+    --mdc-slider-with-tick-marks-inactive-container-color: rgba(255, 255, 255, 0.3);
+    --mdc-slider-with-tick-marks-active-container-color: #{$material-primary-dark};
+    --mdc-slider-with-tick-marks-active-container-opacity: 1;
+    --mdc-slider-with-tick-marks-inactive-container-opacity: 0.3;
+    
+    .mdc-slider__track {
+      background-color: rgba(255, 255, 255, 0.3);
+      
+      &--active {
+        background-color: $material-primary-dark;
+      }
+    }
+    
+    .mdc-slider__thumb {
+      background-color: $material-primary-dark;
+      border-color: $material-primary-dark;
+    }
+    
+    .mdc-slider__value-indicator {
+      background-color: $material-primary-dark;
+      color: rgba(0, 0, 0, 0.87);
+    }
+  }
+  
+  // Component-specific styles
+  .bunny-card {
+    border-color: $bunny-border-dark-strong !important;
+  }
+  
+  .happiness-label,
+  .bunny-name {
+    color: $bunny-text-dark-primary;
+  }
+  
+  .countdown-badge {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+    color: white;
+  }
+  
+  .event-item {
+    border-bottom-color: $bunny-border-dark;
+  }
+  
+  .event-text,
+  .event-date {
+    color: $bunny-text-dark-primary;
+  }
+  
+  .section-title {
+    color: $bunny-text-dark-primary;
+  }
+}
+

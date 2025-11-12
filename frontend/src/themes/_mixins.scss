@@ -1,0 +1,86 @@
+// Bunny Theme Mixins
+// Reusable SCSS mixins for common patterns
+
+@import 'variables';
+
+// Dark theme context mixin
+@mixin dark-theme {
+  body.dark-theme & {
+    @content;
+  }
+}
+
+// Light theme context mixin
+@mixin light-theme {
+  body.light-theme & {
+    @content;
+  }
+}
+
+// Theme-aware text color
+@mixin theme-text($light-color: $bunny-text-light-primary, $dark-color: $bunny-text-dark-primary) {
+  color: $light-color;
+  
+  @include dark-theme {
+    color: $dark-color;
+  }
+}
+
+// Theme-aware background color
+@mixin theme-bg($light-color: $bunny-surface-light, $dark-color: $bunny-surface-dark) {
+  background-color: $light-color;
+  
+  @include dark-theme {
+    background-color: $dark-color;
+  }
+}
+
+// Theme-aware border color
+@mixin theme-border($light-color: $bunny-border-light, $dark-color: $bunny-border-dark) {
+  border-color: $light-color;
+  
+  @include dark-theme {
+    border-color: $dark-color;
+  }
+}
+
+// Card hover effect
+@mixin card-hover {
+  transition: box-shadow $transition-base, transform $transition-base;
+  
+  &:hover {
+    box-shadow: $shadow-hover;
+    transform: translateY(-2px);
+  }
+}
+
+// Container max-width
+@mixin container($max-width: 1200px) {
+  max-width: $max-width;
+  margin: 0 auto;
+  padding: $spacing-xl $spacing-md;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+// Flex center (align items only)
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+}
+
+// Flex center (both align and justify)
+@mixin flex-center-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Grid layout
+@mixin grid($min-width: 280px, $gap: $spacing-xl) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax($min-width, 1fr));
+  gap: $gap;
+  width: 100%;
+}
+

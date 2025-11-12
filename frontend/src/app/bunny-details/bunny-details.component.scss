@@ -1,20 +1,14 @@
+@import '../../themes/mixins';
+@import '../../themes/variables';
+
 .details-container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-  width: 100%;
-  box-sizing: border-box;
+  @include container(900px);
 }
 
 .bunny-details-card {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
-  border-radius: 12px;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
-
-  &:hover {
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15), 0 6px 12px rgba(0, 0, 0, 0.1);
-    transform: translateY(-4px);
-  }
+  box-shadow: $shadow-md;
+  border-radius: $radius-lg;
+  @include card-hover;
 }
 
 .bunny-header {

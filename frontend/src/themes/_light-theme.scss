@@ -1,0 +1,10 @@
+// Light Theme Styles
+// Styles specific to the light theme
+
+@import 'variables';
+
+body.light-theme {
+  background-color: $bunny-bg-light;
+  color: $bunny-text-light-primary;
+}
+

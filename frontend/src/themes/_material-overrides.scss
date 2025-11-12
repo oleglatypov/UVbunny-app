@@ -1,0 +1,64 @@
+// Material Component Overrides
+// Custom styling for Angular Material components
+
+@import 'variables';
+
+// Root CSS variables for Material theme
+:root {
+  --mdc-theme-primary: #{$bunny-primary};
+  --mat-toolbar-container-background-color: #{$bunny-primary};
+}
+
+// Toolbar overrides - multiple selectors for compatibility
+.mat-toolbar.mat-primary,
+.mat-mdc-toolbar.mat-primary,
+mat-toolbar[color="primary"],
+.mat-toolbar[color="primary"],
+app-header .mat-toolbar.mat-primary,
+app-header .mat-mdc-toolbar.mat-primary,
+app-header mat-toolbar[color="primary"] {
+  --mdc-theme-primary: #{$bunny-primary};
+  --mat-toolbar-container-background-color: #{$bunny-primary};
+  background-color: $bunny-primary !important;
+}
+
+// Light theme toolbar
+body.light-theme {
+  .mat-toolbar.mat-primary,
+  .mat-mdc-toolbar.mat-primary,
+  mat-toolbar[color="primary"],
+  app-header .mat-toolbar.mat-primary,
+  app-header .mat-mdc-toolbar.mat-primary {
+    --mdc-theme-primary: #{$bunny-primary};
+    --mat-toolbar-container-background-color: #{$bunny-primary};
+    background-color: $bunny-primary !important;
+  }
+}
+
+// Dialog container padding
+.mat-mdc-dialog-container {
+  .mdc-dialog__surface {
+    padding: 0 !important;
+  }
+  
+  --mdc-dialog-container-shape: 8px;
+  
+  .mat-mdc-dialog-surface {
+    padding: 0;
+  }
+}
+
+mat-dialog-container {
+  padding: 0 !important;
+}
+
+// Card hover animation
+mat-card {
+  transition: box-shadow $transition-base, transform $transition-base;
+  
+  &:hover {
+    box-shadow: $shadow-hover;
+    transform: translateY(-2px);
+  }
+}
+
