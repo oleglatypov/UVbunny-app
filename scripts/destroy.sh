@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Basic usage
+# ./scripts/destroy.sh dev
+# ./scripts/destroy.sh prod
+
+# With auto-confirm (skip confirmation prompt)
+# ./scripts/destroy.sh dev --confirm
+# ./scripts/destroy.sh prod --confirm
+
 set -e
 
 # Check if environment parameter is provided

@@ -338,12 +338,12 @@ The project includes deployment scripts that handle building and deploying every
 
 **Deploy to Channel with Expiration:**
 ```bash
-# Deploy to channel with expiration date
-./scripts/deploy.sh dev --channel preview-123 --expires +7d
-./scripts/deploy.sh prod --channel staging --expires 2024-12-31
+# Deploy to channel with expiration duration (max 30d)
+./scripts/deploy.sh dev --channel preview-123 --expires 7d
+./scripts/deploy.sh prod --channel staging --expires 14d
 
 # Short form
-./scripts/deploy.sh dev -c preview-123 -e +14d
+./scripts/deploy.sh dev -c preview-123 -e 30d
 ```
 
 **Combined Options:**
@@ -352,7 +352,7 @@ The project includes deployment scripts that handle building and deploying every
 ./scripts/deploy.sh dev --frontend-only --channel feature-branch
 
 # Deploy to channel with expiration (frontend-only)
-./scripts/deploy.sh prod -f -c staging -e +30d
+./scripts/deploy.sh prod -f -c staging -e 30d
 ```
 
 #### What the Script Does

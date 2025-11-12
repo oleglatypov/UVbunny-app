@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# # Show help
+# ./scripts/deploy.sh --help
+
+# ./scripts/deploy.sh dev                                    # Deploy everything to dev
+# ./scripts/deploy.sh prod --frontend-only                   # Deploy only frontend to prod
+# ./scripts/deploy.sh dev --channel preview-123              # Deploy to preview channel
+# ./scripts/deploy.sh prod --channel staging --expires 14d    # Deploy to staging channel, expires in 14 days
+#short flags
+# ./scripts/deploy.sh dev -f                                 # Frontend-only (short form)
+# ./scripts/deploy.sh dev -c preview-123                     # Channel (short form)
+# ./scripts/deploy.sh dev -c preview-123 -e 7d               # Channel with expiration (short form)
+# ./scripts/deploy.sh prod -f -c staging -e 30d               # Combined options (short form)
+
+
 set -e
 
 # Parse arguments
@@ -38,14 +52,14 @@ while [[ $# -gt 0 ]]; do
       echo "Options:"
       echo "  --frontend-only, -f    Deploy only frontend (skip functions and rules)"
       echo "  --channel, -c CHANNEL  Deploy to a specific hosting channel (preview channel)"
-      echo "  --expires, -e DATE      Set expiration date for channel (format: YYYY-MM-DD or +7d for 7 days)"
+      echo "  --expires, -e DURATION  Set expiration duration for channel (format: 7d, 14d, 30d, max 30d)"
       echo "  --help, -h             Show this help message"
       echo ""
       echo "Examples:"
       echo "  $0 dev                                    # Deploy everything to dev"
       echo "  $0 prod --frontend-only                   # Deploy only frontend to prod"
       echo "  $0 dev --channel preview-123              # Deploy to preview channel"
-      echo "  $0 prod --channel staging --expires +14d   # Deploy to staging channel, expires in 14 days"
+      echo "  $0 prod --channel staging --expires 14d    # Deploy to staging channel, expires in 14 days"
       exit 0
       ;;
     *)
@@ -196,29 +210,64 @@ cd ..
 echo ""
 echo "🎯 Deploying to Firebase..."
 
-# Build deployment command
-DEPLOY_CMD="firebase deploy --project \"${PROJECT_ID}\" --force"
-
-# Add deployment targets based on flags
-if [ "$FRONTEND_ONLY" = true ]; then
-    DEPLOY_CMD="$DEPLOY_CMD --only hosting"
-else
-    DEPLOY_CMD="$DEPLOY_CMD --only functions,hosting,firestore:rules"
+# Verify hosting build directory exists
+HOSTING_DIR="frontend/dist/uvbunny-app"
+if [ ! -d "$HOSTING_DIR" ]; then
+    echo "❌ Error: Hosting build directory not found: ${HOSTING_DIR}"
+    echo "   Please run the frontend build first"
+    exit 1
 fi
 
-# Add channel if specified
+if [ ! -f "$HOSTING_DIR/index.html" ]; then
+    echo "❌ Error: index.html not found in ${HOSTING_DIR}"
+    echo "   The frontend build may have failed"
+    exit 1
+fi
+
+# Deploy to channel or regular hosting
 if [ -n "$CHANNEL" ]; then
-    DEPLOY_CMD="$DEPLOY_CMD --channel \"${CHANNEL}\""
+    # Deploy to a hosting channel (preview deployment)
+    echo "  Deploying to hosting channel: ${CHANNEL}"
     
-    # Add expiration if specified
+    # Build channel deploy command - explicitly deploy hosting
+    CHANNEL_CMD="firebase hosting:channel:deploy \"${CHANNEL}\" --project \"${PROJECT_ID}\" --only hosting"
+    
+    # Add expiration if specified (format: 7d, 14d, 30d, etc.)
     if [ -n "$EXPIRE_DATE" ]; then
-        DEPLOY_CMD="$DEPLOY_CMD --expires \"${EXPIRE_DATE}\""
+        # Remove leading + if present (e.g., +7d -> 7d)
+        EXPIRES_CLEANED=$(echo "$EXPIRE_DATE" | sed 's/^+//')
+        CHANNEL_CMD="$CHANNEL_CMD --expires \"${EXPIRES_CLEANED}\""
     fi
+    
+    # Execute channel deployment and capture output
+    echo "  Executing: $CHANNEL_CMD"
+    CHANNEL_OUTPUT=$(eval $CHANNEL_CMD 2>&1)
+    echo "$CHANNEL_OUTPUT"
+    
+    # Extract actual channel URL from output (format: https://project--channel-hash.web.app)
+    ACTUAL_CHANNEL_URL=$(echo "$CHANNEL_OUTPUT" | grep -oE 'https://[^[:space:]]+--[^[:space:]]+\.web\.app' | head -1)
+    
+    # If not frontend-only, still need to deploy functions and rules
+    if [ "$FRONTEND_ONLY" = false ]; then
+        echo ""
+        echo "  Deploying Functions and Firestore Rules..."
+        firebase deploy --project "${PROJECT_ID}" --force --only functions,firestore:rules
+    fi
+else
+    # Regular deployment (main hosting site)
+    DEPLOY_CMD="firebase deploy --project \"${PROJECT_ID}\" --force"
+    
+    # Add deployment targets based on flags
+    if [ "$FRONTEND_ONLY" = true ]; then
+        DEPLOY_CMD="$DEPLOY_CMD --only hosting"
+    else
+        DEPLOY_CMD="$DEPLOY_CMD --only functions,hosting,firestore:rules"
+    fi
+    
+    # Execute deployment
+    echo "  Executing: $DEPLOY_CMD"
+    eval $DEPLOY_CMD
 fi
-
-# Execute deployment
-echo "  Executing: $DEPLOY_CMD"
-eval $DEPLOY_CMD
 
 # 4. Get deployment URLs
 echo ""
@@ -227,7 +276,18 @@ echo ""
 
 # Display hosting URL based on channel
 if [ -n "$CHANNEL" ]; then
-    echo "📺 Channel URL     : https://${PROJECT_ID}--${CHANNEL}.web.app"
+    # Use actual URL if captured, otherwise construct it
+    if [ -n "$ACTUAL_CHANNEL_URL" ]; then
+        echo "📺 Channel URL     : ${ACTUAL_CHANNEL_URL}"
+    else
+        # Fallback: try to get URL from channel list
+        CHANNEL_URL=$(firebase hosting:channel:list --project "${PROJECT_ID}" 2>/dev/null | grep -E "^│ ${CHANNEL} " | awk -F'│' '{print $4}' | xargs)
+        if [ -n "$CHANNEL_URL" ]; then
+            echo "📺 Channel URL     : ${CHANNEL_URL}"
+        else
+            echo "📺 Channel URL     : https://${PROJECT_ID}--${CHANNEL}.web.app (check Firebase console for actual URL)"
+        fi
+    fi
     if [ -n "$EXPIRE_DATE" ]; then
         echo "⏰ Expires          : ${EXPIRE_DATE}"
     fi
