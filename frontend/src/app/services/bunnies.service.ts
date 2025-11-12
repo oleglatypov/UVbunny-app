@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, collectionData, addDoc, query, serverTimestamp, doc, deleteDoc, orderBy } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, addDoc, query, serverTimestamp, doc, deleteDoc, orderBy, getDocs } from '@angular/fire/firestore';
 import { Auth, authState } from '@angular/fire/auth';
 import { Observable, of, combineLatest, map, switchMap, shareReplay } from 'rxjs';
 import { Bunny, BunnyWithHappiness, BunnyColor, UserConfig, BunnyMood } from '../types';
@@ -27,6 +27,7 @@ export class BunniesService {
   private readonly defaultMaxHappinessMultiplier = 100;
   private readonly defaultSadThreshold = 20;
   private readonly defaultAverageThreshold = 49;
+  private readonly maxBunniesPerUser = 10;
 
   private readonly currentUserId$ = authState(this.auth).pipe(
     map((user) => user?.uid ?? null),
@@ -56,9 +57,17 @@ export class BunniesService {
   /**
    * Create a new bunny with optional color selection.
    * @returns Promise resolving to the new bunny's document ID.
+   * @throws Error if user has reached the maximum number of bunnies (10).
    */
   async createBunny(name: string, color?: BunnyColor): Promise<string> {
     const currentUser = this.getCurrentUser();
+    
+    // Check current bunny count before creating
+    const currentBunnies = await this.getCurrentBunnyCount(currentUser.uid);
+    if (currentBunnies >= this.maxBunniesPerUser) {
+      throw new Error(`Ohh your family got big! 😊 Time to kick out somebody!`);
+    }
+    
     const selectedColor = color ?? this.selectRandomColor();
     const bunniesCollection = collection(this.firestore, getBunniesCollectionPath(currentUser.uid));
 
@@ -177,6 +186,16 @@ export class BunniesService {
 
     const totalHappiness = bunnies.reduce((sum, bunny) => sum + bunny.happiness, 0);
     return Math.round(totalHappiness / bunnies.length);
+  }
+
+  /**
+   * Get current count of bunnies for a user.
+   * Used to enforce maximum limit before creating new bunny.
+   */
+  private async getCurrentBunnyCount(userId: string): Promise<number> {
+    const bunniesCollection = collection(this.firestore, getBunniesCollectionPath(userId));
+    const querySnapshot = await getDocs(bunniesCollection);
+    return querySnapshot.size;
   }
 
   /**

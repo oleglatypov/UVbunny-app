@@ -10,7 +10,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDialogModule } from '@angular/material/dialog';
-import { Subject, takeUntil, Observable } from 'rxjs';
+import { Subject, takeUntil, Observable, firstValueFrom } from 'rxjs';
 import { BunniesService } from '../services/bunnies.service';
 import { BunnyWithHappiness, BunnyColor } from '../types';
 import { AddBunnyDialogComponent } from './add-bunny-dialog.component';
@@ -40,6 +40,7 @@ import { HeaderComponent } from '../shared/header.component';
 export class DashboardComponent implements OnInit, OnDestroy {
   // Use reactive observables directly in template with async pipe
   bunnies$!: Observable<BunnyWithHappiness[]>;
+  readonly maxBunniesPerUser = 10;
   private destroy$ = new Subject<void>();
   private countdownInterval: any;
 
@@ -74,6 +75,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   async openAddBunnyDialog(): Promise<void> {
+    // Check if user has reached the maximum limit
+    const currentBunnies = await this.getCurrentBunnyCount();
+    if (currentBunnies >= this.maxBunniesPerUser) {
+      this.snackBar.open(
+        `Ohh your family got big! 😊 Time to kick out somebody!`,
+        'Close',
+        { duration: 6000 }
+      );
+      return;
+    }
+
     const dialogRef = this.dialog.open(AddBunnyDialogComponent, {
       width: '450px',
       disableClose: false,
@@ -88,12 +100,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
             this.snackBar.open('Bunny created! 🐇', 'Close', { duration: 3000 });
             // No need to reload - reactive stream will update automatically via collectionData
           } catch (error: any) {
-            this.snackBar.open('Error creating bunny: ' + error.message, 'Close', {
-              duration: 5000,
+            // Error message will be displayed from the service (already includes fun message)
+            this.snackBar.open(error.message, 'Close', {
+              duration: 6000,
             });
           }
         }
       });
+  }
+
+  /**
+   * Get current bunny count from the reactive stream.
+   */
+  private async getCurrentBunnyCount(): Promise<number> {
+    const bunnies = await firstValueFrom(this.bunnies$);
+    return bunnies.length;
+  }
+
+  /**
+   * Check if user can create more bunnies.
+   */
+  canCreateBunny(bunniesCount: number): boolean {
+    return bunniesCount < this.maxBunniesPerUser;
   }
 
 

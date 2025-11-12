@@ -42,12 +42,24 @@
       </mat-card>
     }
 
-    <mat-card class="add-bunny-card" (click)="openAddBunnyDialog()" aria-label="Add new bunny">
-      <mat-card-content class="add-content">
-        <mat-icon class="add-icon">add</mat-icon>
-        <p>Add Bunny</p>
-      </mat-card-content>
-    </mat-card>
+    @if (bunnies$ | async; as bunnies) {
+      @if (canCreateBunny(bunnies.length)) {
+        <mat-card class="add-bunny-card" (click)="openAddBunnyDialog()" aria-label="Add new bunny">
+          <mat-card-content class="add-content">
+            <mat-icon class="add-icon">add</mat-icon>
+            <p>Add Bunny</p>
+          </mat-card-content>
+        </mat-card>
+      } @else {
+        <mat-card class="add-bunny-card limit-reached" aria-label="Maximum bunnies reached">
+          <mat-card-content class="add-content">
+            <mat-icon class="add-icon">sentiment_satisfied</mat-icon>
+            <p>Ohh your family got big! 😊</p>
+            <p class="limit-message">Time to kick out somebody! You have reached the maximum of {{ maxBunniesPerUser }} bunnies.</p>
+          </mat-card-content>
+        </mat-card>
+      }
+    }
   </div>
 </div>
 

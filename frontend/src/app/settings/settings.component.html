@@ -54,6 +54,52 @@
 
       <mat-divider class="divider"></mat-divider>
 
+      <div class="config-section">
+        <div class="config-label-row">
+          <label for="max-happiness-slider" class="config-label">
+            <mat-icon class="label-icon">trending_up</mat-icon>
+            Max Happiness Points (Progress Bar Cap)
+          </label>
+          <div class="current-value">
+            <span class="value-display">{{ maxHappinessPoints ?? '...' }}</span>
+            <span class="value-unit">points</span>
+          </div>
+        </div>
+
+        @if (!configLoading && maxHappinessPoints !== null) {
+          <mat-slider
+            id="max-happiness-slider"
+            class="max-happiness-slider"
+            [min]="100"
+            [max]="1000"
+            [step]="50"
+            [discrete]="true"
+            [showTickMarks]="false"
+            aria-label="Max happiness points">
+            <input matSliderThumb [value]="maxHappinessPoints!" (valueChange)="onMaxHappinessSliderChange($event)" title="Max happiness points" />
+          </mat-slider>
+        }
+        
+        @if (configLoading) {
+          <div class="loading-placeholder">
+            <p>Loading configuration...</p>
+          </div>
+        }
+
+        <div class="slider-labels">
+          <span class="slider-label">100</span>
+          <span class="slider-label">550</span>
+          <span class="slider-label">1000</span>
+        </div>
+        
+        <p class="config-note">
+          <mat-icon class="note-icon">info</mat-icon>
+          This sets when the progress bar reaches 100%. Default: Points per Carrot × 100
+        </p>
+      </div>
+
+      <mat-divider class="divider"></mat-divider>
+
       <div class="impact-section">
         <h3 class="impact-title">
           <mat-icon class="impact-icon">info</mat-icon>
@@ -73,11 +119,19 @@
               <div class="impact-value">{{ pointsPerCarrot * 100 }}</div>
               <div class="impact-label">Happiness for 100 carrots</div>
             </div>
+            <div class="impact-card">
+              <div class="impact-value">{{ getMaxHappinessPoints() }}</div>
+              <div class="impact-label">Max happiness (100% cap)</div>
+            </div>
+            <div class="impact-card">
+              <div class="impact-value">{{ getProgressBarPercent(pointsPerCarrot * 100) }}%</div>
+              <div class="impact-label">Progress at 100 carrots</div>
+            </div>
           </div>
         }
         <p class="impact-note">
           <mat-icon class="note-icon">lightbulb</mat-icon>
-          This setting affects all bunnies. Changes will be applied immediately to happiness calculations.
+          These settings affect all bunnies. Changes will be applied immediately to happiness calculations and progress bars.
         </p>
       </div>
     </mat-card-content>
@@ -95,10 +149,10 @@
       <button
         mat-button
         (click)="resetToDefault()"
-        [disabled]="loading || configLoading || pointsPerCarrot === 3 || pointsPerCarrot === null"
+        [disabled]="loading || configLoading || (pointsPerCarrot === 3 && maxHappinessPoints === 300) || pointsPerCarrot === null"
         aria-label="Reset to default">
         <mat-icon>refresh</mat-icon>
-        <span>Reset to Default (3)</span>
+        <span>Reset to Default</span>
       </button>
       <button mat-button routerLink="/" aria-label="Cancel and go back">
         Cancel

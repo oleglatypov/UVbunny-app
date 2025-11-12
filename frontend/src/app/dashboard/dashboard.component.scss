@@ -188,6 +188,31 @@ mat-progress-bar {
     transform: translateY(-4px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
   }
+
+  &.limit-reached {
+    cursor: not-allowed;
+    border-color: #f44336 !important;
+    background-color: rgba(244, 67, 54, 0.05);
+    opacity: 0.8;
+
+    &:hover {
+      transform: none;
+      border-color: #f44336 !important;
+      background-color: rgba(244, 67, 54, 0.08);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .add-icon {
+      color: #f44336;
+    }
+
+    .limit-message {
+      font-size: 0.875rem;
+      color: rgba(0, 0, 0, 0.6);
+      margin-top: 0.5rem;
+      text-align: center;
+    }
+  }
 }
 
 .add-content {

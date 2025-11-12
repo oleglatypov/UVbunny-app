@@ -33,9 +33,11 @@ import { HeaderComponent } from '../shared/header.component';
 })
 export class SettingsComponent implements OnInit, OnDestroy {
   pointsPerCarrot: number | null = null; // Initialize as null until loaded from DB
+  maxHappinessPoints: number | null = null; // Initialize as null until loaded from DB
   loading = false;
   configLoading = true; // Track if config is still loading
   private originalPointsPerCarrot: number | null = null;
+  private originalMaxHappinessPoints: number | null = null;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -54,14 +56,21 @@ export class SettingsComponent implements OnInit, OnDestroy {
           // Use the value from the database (or default 3 if no record exists)
           this.pointsPerCarrot = config.pointsPerCarrot;
           this.originalPointsPerCarrot = config.pointsPerCarrot;
+          
+          // Set maxHappinessPoints from config or calculate default (pointsPerCarrot * 100)
+          this.maxHappinessPoints = config.maxHappinessPoints ?? config.pointsPerCarrot * 100;
+          this.originalMaxHappinessPoints = this.maxHappinessPoints;
         } else {
           // Fallback: only use 3 if config is null (shouldn't happen, but safety)
           this.pointsPerCarrot = 3;
           this.originalPointsPerCarrot = 3;
+          this.maxHappinessPoints = 300; // 3 * 100
+          this.originalMaxHappinessPoints = 300;
         }
         
-        // Ensure value is normalized and trigger change detection
+        // Ensure values are normalized and trigger change detection
         this.normalizeValue();
+        this.normalizeMaxHappinessPoints();
         this.configLoading = false; // Config has loaded
         this.cdr.detectChanges();
       },
@@ -70,6 +79,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
         // On error, use default value but show error message
         this.pointsPerCarrot = 3;
         this.originalPointsPerCarrot = 3;
+        this.maxHappinessPoints = 300;
+        this.originalMaxHappinessPoints = 300;
         this.snackBar.open('Error loading settings: ' + error.message, 'Close', {
           duration: 5000,
         });
@@ -84,20 +95,41 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   isValid(): boolean {
-    return (
+    const pointsValid = (
       this.pointsPerCarrot !== null &&
       this.pointsPerCarrot !== undefined &&
       !isNaN(this.pointsPerCarrot) &&
       this.pointsPerCarrot >= 1 &&
       this.pointsPerCarrot <= 10
     );
+    
+    const maxPointsValid = (
+      this.maxHappinessPoints !== null &&
+      this.maxHappinessPoints !== undefined &&
+      !isNaN(this.maxHappinessPoints) &&
+      this.maxHappinessPoints >= 1
+    );
+    
+    return pointsValid && maxPointsValid;
   }
 
   onSliderChange(value: number): void {
     // Update the value directly from the slider
     this.pointsPerCarrot = value;
     this.normalizeValue();
+    // Auto-update maxHappinessPoints if it's using default (pointsPerCarrot * 100)
+    if (this.maxHappinessPoints === this.originalMaxHappinessPoints && 
+        this.originalMaxHappinessPoints === (this.originalPointsPerCarrot ?? 3) * 100) {
+      this.maxHappinessPoints = value * 100;
+      this.normalizeMaxHappinessPoints();
+    }
     // Force change detection to update Impact Preview immediately
+    this.cdr.detectChanges();
+  }
+
+  onMaxHappinessSliderChange(value: number): void {
+    this.maxHappinessPoints = value;
+    this.normalizeMaxHappinessPoints();
     this.cdr.detectChanges();
   }
 
@@ -121,6 +153,26 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     // Round to integer if needed
     this.pointsPerCarrot = Math.round(this.pointsPerCarrot);
+  }
+
+  private normalizeMaxHappinessPoints(): void {
+    // Skip normalization if value is null (still loading)
+    if (this.maxHappinessPoints === null || this.maxHappinessPoints === undefined) {
+      return;
+    }
+
+    // Convert to number if it's a string
+    if (typeof this.maxHappinessPoints === 'string') {
+      this.maxHappinessPoints = parseFloat(this.maxHappinessPoints) || (this.pointsPerCarrot ?? 3) * 100;
+    }
+
+    // Ensure value stays within bounds (minimum 1)
+    if (isNaN(this.maxHappinessPoints) || this.maxHappinessPoints < 1) {
+      this.maxHappinessPoints = (this.pointsPerCarrot ?? 3) * 100;
+    }
+
+    // Round to integer if needed
+    this.maxHappinessPoints = Math.round(this.maxHappinessPoints);
   }
 
   /**
@@ -147,17 +199,37 @@ export class SettingsComponent implements OnInit, OnDestroy {
     return this.getPointsPerCarrot() * 100;
   }
 
+  /**
+   * Get current max happiness points or calculate default
+   */
+  getMaxHappinessPoints(): number {
+    if (this.maxHappinessPoints !== null && this.maxHappinessPoints >= 1) {
+      return this.maxHappinessPoints;
+    }
+    return this.getPointsPerCarrot() * 100;
+  }
+
+  /**
+   * Calculate progress bar percentage for a given happiness value
+   */
+  getProgressBarPercent(happiness: number): number {
+    const max = this.getMaxHappinessPoints();
+    return Math.min(100, Math.round((happiness / max) * 100));
+  }
+
   resetToDefault(): void {
-    // Reset to default value of 3
+    // Reset to default values
     this.pointsPerCarrot = 3;
+    this.maxHappinessPoints = 300; // 3 * 100
     this.normalizeValue();
+    this.normalizeMaxHappinessPoints();
     this.cdr.detectChanges();
   }
 
   async saveSettings(): Promise<void> {
     // Step 1: Validation and Feedback in the UI
-    if (!this.isValid() || this.pointsPerCarrot === null) {
-      this.snackBar.open('Points per carrot must be between 1 and 10', 'Close', {
+    if (!this.isValid() || this.pointsPerCarrot === null || this.maxHappinessPoints === null) {
+      this.snackBar.open('Please ensure all values are valid (points: 1-10, max happiness: ≥1)', 'Close', {
         duration: 3000,
       });
       return;
@@ -169,11 +241,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
     try {
       // Step 2: ConfigService Updates Firestore
       // This will write to users/{uid}/config/current with merge: true
-      // pointsPerCarrot is guaranteed to be a number here due to validation above
+      // Both values are guaranteed to be numbers here due to validation above
       await this.configService.updatePointsPerCarrot(this.pointsPerCarrot);
+      await this.configService.updateMaxHappinessPoints(this.maxHappinessPoints);
       
-      // Update original value to track changes
+      // Update original values to track changes
       this.originalPointsPerCarrot = this.pointsPerCarrot;
+      this.originalMaxHappinessPoints = this.maxHappinessPoints;
       
       // Step 5: User Feedback - Success
       this.loading = false;
@@ -182,7 +256,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
       });
       
       // Step 4: Real-Time Propagation happens automatically via ConfigService.config$
-      // BunniesService will automatically recalculate happiness using the new pointsPerCarrot
+      // BunniesService will automatically recalculate happiness using the new values
       // No manual refresh needed - reactive streams handle it
       
     } catch (error: any) {
