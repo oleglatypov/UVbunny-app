@@ -41,6 +41,7 @@ export class HeaderComponent {
   appVersion = environment.version;
   averageHappiness$: Observable<number>;
   isDarkMode$: Observable<boolean>;
+  userName$: Observable<string | null>;
 
   constructor(
     private authService: AuthService,
@@ -53,6 +54,9 @@ export class HeaderComponent {
     this.isDarkMode$ = this.themeService.theme$.pipe(
       // Convert Theme to boolean
       map(theme => theme === 'dark')
+    );
+    this.userName$ = this.authService.currentUser$.pipe(
+      map(user => user?.displayName || user?.email || null)
     );
   }
 
