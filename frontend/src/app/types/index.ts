@@ -5,6 +5,8 @@
 export interface UserConfig {
   pointsPerCarrot: number; // 1-10
   maxHappinessPoints?: number; // Optional cap for progress bar (default: pointsPerCarrot * 100)
+  moodSadThreshold?: number; // Percentage threshold for sad mood (default: 20)
+  moodAverageThreshold?: number; // Percentage threshold for average mood (default: 49)
   updatedAt: Date;
 }
 

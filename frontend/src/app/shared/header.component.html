@@ -7,8 +7,10 @@
       <mat-icon>arrow_back</mat-icon>
     </button>
   }
-  <span>UVbunny</span>
-  <span class="version">v{{ appVersion }}</span>
+  <div class="logo-container" (click)="goHome()" role="button" tabindex="0" (keydown.enter)="goHome()" (keydown.space)="goHome()">
+    <img src="assets/logo.svg" alt="UVbunny Logo" class="logo" />
+    <span class="version">v{{ appVersion }}</span>
+  </div>
   <span class="spacer"></span>
   @if (averageHappiness$ | async; as avg) {
     <mat-chip>

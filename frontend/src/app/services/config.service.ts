@@ -5,115 +5,200 @@ import { Observable, of, switchMap, map, shareReplay } from 'rxjs';
 import { UserConfig } from '../types';
 import { getUserConfigPath } from '../shared/paths';
 
+interface FirestoreConfigData {
+  pointsPerCarrot?: number;
+  maxHappinessPoints?: number;
+  moodSadThreshold?: number;
+  moodAverageThreshold?: number;
+  updatedAt?: any;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class ConfigService {
-  private firestore = inject(Firestore);
-  private auth = inject(Auth);
+  private readonly firestore = inject(Firestore);
+  private readonly auth = inject(Auth);
 
-  /** Stream: currently signed-in user's UID (null if signed out) */
-  private readonly uid$ = authState(this.auth).pipe(
-    map((u) => u?.uid ?? null),
+  private readonly defaultPointsPerCarrot = 3;
+  private readonly minPointsPerCarrot = 1;
+  private readonly maxPointsPerCarrot = 10;
+  private readonly defaultSadThreshold = 20;
+  private readonly defaultAverageThreshold = 49;
+  private readonly minThreshold = 0;
+  private readonly maxThreshold = 100;
+  private readonly minMaxHappinessPoints = 1;
+
+  private readonly currentUserId$ = authState(this.auth).pipe(
+    map((user) => user?.uid ?? null),
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   /**
-   * Get user config stream (reactive)
-   * Returns default config if document doesn't exist
-   * 
-   * This stream automatically emits new values when the config document changes in Firestore.
-   * Components subscribing to this (like BunniesService) will automatically recalculate
-   * happiness values when pointsPerCarrot changes - enabling retroactive behavior.
+   * Reactive stream of user configuration.
+   * Automatically emits new values when config document changes in Firestore.
+   * Returns default config if document doesn't exist.
    */
-  readonly config$: Observable<UserConfig | null> = this.uid$.pipe(
-    switchMap((uid) => {
-      if (!uid) return of(null);
+  readonly config$: Observable<UserConfig | null> = this.currentUserId$.pipe(
+    switchMap((userId) => {
+      if (!userId) {
+        return of(null);
+      }
 
-      const configRef = doc(this.firestore, getUserConfigPath(uid));
-      return docData(configRef, { idField: 'id' }).pipe(
-        map((data) => {
-          if (!data) {
-            // Return default config if document doesn't exist
-            return { pointsPerCarrot: 3, updatedAt: new Date() };
-          }
-
-          const configData = data as any;
-          // AngularFire automatically converts Firestore Timestamps to Date
-          const updatedAt = configData.updatedAt instanceof Date
-            ? configData.updatedAt
-            : (configData.updatedAt as any)?.toDate?.() || new Date();
-
-          return {
-            pointsPerCarrot: configData.pointsPerCarrot || 3,
-            maxHappinessPoints: configData.maxHappinessPoints, // Optional, defaults to pointsPerCarrot * 100
-            updatedAt,
-          };
-        }),
+      const configDocumentReference = doc(this.firestore, getUserConfigPath(userId));
+      return docData(configDocumentReference, { idField: 'id' }).pipe(
+        map((data) => this.mapFirestoreDataToUserConfig(data)),
       );
     }),
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   /**
-   * Update points per carrot (1-10)
-   * Uses setDoc with merge: true to create or update the config document
-   * Returns Promise for easier async/await usage
+   * Update points per carrot (1-10).
    */
   async updatePointsPerCarrot(points: number): Promise<void> {
-    // Client-side validation: clamp value between 1-10
-    const clampedPoints = Math.max(1, Math.min(10, Math.round(points)));
-    
-    if (points !== clampedPoints) {
-      throw new Error('pointsPerCarrot must be between 1 and 10');
-    }
+    const validatedPoints = this.validateAndClampPointsPerCarrot(points);
+    const currentUser = this.getCurrentUser();
 
-    const user = this.auth.currentUser;
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-
-    const configRef = doc(this.firestore, getUserConfigPath(user.uid));
-    
-    // Use setDoc with merge: true to create or update
-    // This ensures the document exists even on first save
+    const configDocumentReference = doc(this.firestore, getUserConfigPath(currentUser.uid));
     await setDoc(
-      configRef,
+      configDocumentReference,
       {
-        pointsPerCarrot: clampedPoints,
+        pointsPerCarrot: validatedPoints,
         updatedAt: serverTimestamp(),
       },
-      { merge: true }
+      { merge: true },
     );
   }
 
   /**
-   * Update max happiness points (optional cap for progress bar)
-   * Uses setDoc with merge: true to create or update the config document
-   * Returns Promise for easier async/await usage
+   * Update max happiness points (optional cap for progress bar).
    */
   async updateMaxHappinessPoints(maxPoints: number): Promise<void> {
-    if (maxPoints < 1) {
-      throw new Error('maxHappinessPoints must be greater than 0');
-    }
+    this.validateMaxHappinessPoints(maxPoints);
+    const currentUser = this.getCurrentUser();
 
-    const user = this.auth.currentUser;
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-
-    const configRef = doc(this.firestore, getUserConfigPath(user.uid));
-    
-    // Use setDoc with merge: true to create or update
-    // This ensures the document exists even on first save
+    const configDocumentReference = doc(this.firestore, getUserConfigPath(currentUser.uid));
     await setDoc(
-      configRef,
+      configDocumentReference,
       {
         maxHappinessPoints: maxPoints,
         updatedAt: serverTimestamp(),
       },
-      { merge: true }
+      { merge: true },
     );
+  }
+
+  /**
+   * Update mood thresholds (percentages for sad and average moods).
+   */
+  async updateMoodThresholds(sadThreshold: number, averageThreshold: number): Promise<void> {
+    this.validateMoodThresholds(sadThreshold, averageThreshold);
+    const currentUser = this.getCurrentUser();
+
+    const configDocumentReference = doc(this.firestore, getUserConfigPath(currentUser.uid));
+    await setDoc(
+      configDocumentReference,
+      {
+        moodSadThreshold: Math.round(sadThreshold),
+        moodAverageThreshold: Math.round(averageThreshold),
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+  }
+
+  /**
+   * Map Firestore data to UserConfig object.
+   */
+  private mapFirestoreDataToUserConfig(data: any): UserConfig {
+    if (!data) {
+      return this.createDefaultUserConfig();
+    }
+
+    const configData = data as FirestoreConfigData;
+    const updatedAt = this.normalizeTimestamp(configData.updatedAt);
+
+    return {
+      pointsPerCarrot: configData.pointsPerCarrot ?? this.defaultPointsPerCarrot,
+      maxHappinessPoints: configData.maxHappinessPoints,
+      moodSadThreshold: configData.moodSadThreshold ?? this.defaultSadThreshold,
+      moodAverageThreshold: configData.moodAverageThreshold ?? this.defaultAverageThreshold,
+      updatedAt,
+    };
+  }
+
+  /**
+   * Create default user configuration.
+   */
+  private createDefaultUserConfig(): UserConfig {
+    return {
+      pointsPerCarrot: this.defaultPointsPerCarrot,
+      moodSadThreshold: this.defaultSadThreshold,
+      moodAverageThreshold: this.defaultAverageThreshold,
+      updatedAt: new Date(),
+    };
+  }
+
+  /**
+   * Normalize Firestore timestamp to Date object.
+   */
+  private normalizeTimestamp(timestamp: any): Date {
+    if (timestamp instanceof Date) {
+      return timestamp;
+    }
+    if (timestamp?.toDate) {
+      return timestamp.toDate();
+    }
+    return new Date();
+  }
+
+  /**
+   * Validate and clamp points per carrot value.
+   */
+  private validateAndClampPointsPerCarrot(points: number): number {
+    const clampedPoints = Math.max(this.minPointsPerCarrot, Math.min(this.maxPointsPerCarrot, Math.round(points)));
+
+    if (points !== clampedPoints) {
+      throw new Error(`pointsPerCarrot must be between ${this.minPointsPerCarrot} and ${this.maxPointsPerCarrot}`);
+    }
+
+    return clampedPoints;
+  }
+
+  /**
+   * Validate max happiness points.
+   */
+  private validateMaxHappinessPoints(maxPoints: number): void {
+    if (maxPoints < this.minMaxHappinessPoints) {
+      throw new Error(`maxHappinessPoints must be greater than ${this.minMaxHappinessPoints - 1}`);
+    }
+  }
+
+  /**
+   * Validate mood thresholds.
+   */
+  private validateMoodThresholds(sadThreshold: number, averageThreshold: number): void {
+    if (sadThreshold < this.minThreshold || sadThreshold > this.maxThreshold) {
+      throw new Error(`moodSadThreshold must be between ${this.minThreshold} and ${this.maxThreshold}`);
+    }
+    if (averageThreshold < this.minThreshold || averageThreshold > this.maxThreshold) {
+      throw new Error(`moodAverageThreshold must be between ${this.minThreshold} and ${this.maxThreshold}`);
+    }
+    if (sadThreshold >= averageThreshold) {
+      throw new Error('moodSadThreshold must be less than moodAverageThreshold');
+    }
+  }
+
+  /**
+   * Get current authenticated user or throw error.
+   */
+  private getCurrentUser() {
+    const user = this.auth.currentUser;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    return user;
   }
 }
 

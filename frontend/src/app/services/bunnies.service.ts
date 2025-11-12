@@ -2,124 +2,219 @@ import { Injectable, inject } from '@angular/core';
 import { Firestore, collection, collectionData, addDoc, query, serverTimestamp, doc, deleteDoc, orderBy } from '@angular/fire/firestore';
 import { Auth, authState } from '@angular/fire/auth';
 import { Observable, of, combineLatest, map, switchMap, shareReplay } from 'rxjs';
-import { Bunny, BunnyWithHappiness, BunnyColor } from '../types';
+import { Bunny, BunnyWithHappiness, BunnyColor, UserConfig, BunnyMood } from '../types';
 import { getBunniesCollectionPath } from '../shared/paths';
 import { ConfigService } from './config.service';
+
+interface FirestoreBunny {
+  id: string;
+  name: string;
+  colorClass: BunnyColor;
+  eventCount?: number;
+  createdAt: any;
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class BunniesService {
-  private firestore = inject(Firestore);
-  private auth = inject(Auth);
-  private config = inject(ConfigService);
+  private readonly firestore = inject(Firestore);
+  private readonly auth = inject(Auth);
+  private readonly configService = inject(ConfigService);
 
-  /** Random palette used when color not provided */
-  private readonly palette: BunnyColor[] = ['cream', 'gray', 'brown', 'white', 'black', 'pink'];
+  private readonly defaultColorPalette: BunnyColor[] = ['cream', 'gray', 'brown', 'white', 'black', 'pink'];
+  private readonly defaultPointsPerCarrot = 3;
+  private readonly defaultMaxHappinessMultiplier = 100;
+  private readonly defaultSadThreshold = 20;
+  private readonly defaultAverageThreshold = 49;
 
-  /** Stream: currently signed-in user's UID (null if signed out) */
-  private readonly uid$ = authState(this.auth).pipe(
-    map((u) => u?.uid ?? null),
+  private readonly currentUserId$ = authState(this.auth).pipe(
+    map((user) => user?.uid ?? null),
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   /**
-   * List all bunnies with computed happiness, mood, and progressBarPercent (0..100)
-   * 
-   * Uses combineLatest to reactively combine bunny data with config.
-   * When config.pointsPerCarrot changes, this automatically recalculates all happiness values.
-   * This enables retroactive behavior - changing pointsPerCarrot instantly updates all bunnies.
+   * Reactive stream of all bunnies with computed happiness metrics.
+   * Automatically recalculates when configuration changes.
    */
   readonly bunnies$: Observable<BunnyWithHappiness[]> = combineLatest([
-    this.uid$.pipe(
-      switchMap((uid) => {
-        if (!uid) return of([] as any[]);
-        const bunniesRef = collection(this.firestore, getBunniesCollectionPath(uid));
-        // Sort by createdAt descending (newest first)
-        const bunniesQuery = query(bunniesRef, orderBy('createdAt', 'desc'));
-        return collectionData(bunniesQuery, { idField: 'id' });
-      }),
-    ),
-    this.config.config$,
+    this.getBunniesCollection$(),
+    this.configService.config$,
   ]).pipe(
-    map(([raw, cfg]: any[]) => {
-      const pointsPerCarrot = cfg?.pointsPerCarrot ?? 3;
-      const maxHap = cfg?.maxHappinessPoints ?? pointsPerCarrot * 100; // default cap = 100 carrots worth
-
-      return (raw as any[]).map((bunny) => {
-        const data: Bunny = {
-          id: bunny.id,
-          name: bunny.name,
-          colorClass: bunny.colorClass,
-          eventCount: bunny.eventCount ?? 0,
-          createdAt: this.convertTimestamp(bunny.createdAt),
-        };
-
-        // Retroactive happiness calculation: uses current pointsPerCarrot from config
-        // When config changes, this recalculates automatically via combineLatest
-        const happiness = data.eventCount * pointsPerCarrot;
-        const mood = this.getMood(happiness);
-        const progressBarPercent = Math.min(100, Math.round((happiness / maxHap) * 100));
-
-        return { ...data, happiness, mood, progressBarPercent } as BunnyWithHappiness & { progressBarPercent: number };
-      });
-    }),
-    shareReplay({ bufferSize: 1, refCount: true }),
-  );
-
-  /** Overall average happiness across all bunnies (0 if none) */
-  readonly averageHappiness$: Observable<number> = this.bunnies$.pipe(
-    map((list) => (list.length ? Math.round(list.reduce((s, b) => s + b.happiness, 0) / list.length) : 0)),
+    map(([bunnies, userConfig]) => this.enrichBunniesWithHappiness(bunnies, userConfig)),
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   /**
-   * Create a new bunny
-   * Returns new document ID (Promise) for easy usage in components.
+   * Average happiness across all bunnies (0 if no bunnies exist).
+   */
+  readonly averageHappiness$: Observable<number> = this.bunnies$.pipe(
+    map((bunnies) => this.calculateAverageHappiness(bunnies)),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
+  /**
+   * Create a new bunny with optional color selection.
+   * @returns Promise resolving to the new bunny's document ID.
    */
   async createBunny(name: string, color?: BunnyColor): Promise<string> {
-    const user = this.auth.currentUser;
-    if (!user) throw new Error('User not authenticated');
+    const currentUser = this.getCurrentUser();
+    const selectedColor = color ?? this.selectRandomColor();
+    const bunniesCollection = collection(this.firestore, getBunniesCollectionPath(currentUser.uid));
 
-    const selectedColor = color ?? this.palette[(Math.random() * this.palette.length) | 0];
-    const bunniesRef = collection(this.firestore, getBunniesCollectionPath(user.uid));
-    const docRef = await addDoc(bunniesRef, {
+    const documentReference = await addDoc(bunniesCollection, {
       name: name.trim(),
       colorClass: selectedColor,
       eventCount: 0,
       createdAt: serverTimestamp(),
     });
-    return docRef.id;
+
+    return documentReference.id;
   }
 
   /**
-   * Delete a bunny from Firestore
-   * Note: Cloud Function onBunnyDeleteCascade will handle deleting associated events
+   * Delete a bunny by ID.
+   * Note: Associated events are deleted by Cloud Function onBunnyDeleteCascade.
    */
   async deleteBunny(bunnyId: string): Promise<void> {
+    const currentUser = this.getCurrentUser();
+    const bunnyDocumentReference = doc(this.firestore, getBunniesCollectionPath(currentUser.uid), bunnyId);
+    await deleteDoc(bunnyDocumentReference);
+  }
+
+  /**
+   * Get reactive stream of bunnies collection for current user.
+   */
+  private getBunniesCollection$(): Observable<FirestoreBunny[]> {
+    return this.currentUserId$.pipe(
+      switchMap((userId) => {
+        if (!userId) {
+          return of([]);
+        }
+
+        const bunniesCollection = collection(this.firestore, getBunniesCollectionPath(userId));
+        const sortedQuery = query(bunniesCollection, orderBy('createdAt', 'desc'));
+        return collectionData(sortedQuery, { idField: 'id' }) as Observable<FirestoreBunny[]>;
+      }),
+    );
+  }
+
+  /**
+   * Enrich raw bunny data with computed happiness metrics.
+   */
+  private enrichBunniesWithHappiness(
+    rawBunnies: FirestoreBunny[],
+    userConfig: UserConfig | null,
+  ): BunnyWithHappiness[] {
+    const pointsPerCarrot = userConfig?.pointsPerCarrot ?? this.defaultPointsPerCarrot;
+    const maxHappinessPoints = userConfig?.maxHappinessPoints ?? pointsPerCarrot * this.defaultMaxHappinessMultiplier;
+
+    return rawBunnies.map((rawBunny) => {
+      const bunny = this.mapFirestoreBunnyToBunny(rawBunny);
+      const happiness = this.calculateHappiness(bunny.eventCount, pointsPerCarrot);
+      const progressBarPercent = this.calculateProgressBarPercent(happiness, maxHappinessPoints);
+      const mood = this.calculateMood(progressBarPercent, userConfig);
+
+      return {
+        ...bunny,
+        happiness,
+        mood,
+        progressBarPercent,
+      };
+    });
+  }
+
+  /**
+   * Map Firestore bunny data to domain Bunny object.
+   */
+  private mapFirestoreBunnyToBunny(rawBunny: FirestoreBunny): Bunny {
+    return {
+      id: rawBunny.id,
+      name: rawBunny.name,
+      colorClass: rawBunny.colorClass,
+      eventCount: rawBunny.eventCount ?? 0,
+      createdAt: this.normalizeTimestamp(rawBunny.createdAt),
+    };
+  }
+
+  /**
+   * Calculate happiness points from event count and points per carrot.
+   */
+  private calculateHappiness(eventCount: number, pointsPerCarrot: number): number {
+    return eventCount * pointsPerCarrot;
+  }
+
+  /**
+   * Calculate progress bar percentage (0-100).
+   */
+  private calculateProgressBarPercent(happiness: number, maxHappinessPoints: number): number {
+    return Math.min(100, Math.round((happiness / maxHappinessPoints) * 100));
+  }
+
+  /**
+   * Calculate mood based on happiness percentage and configurable thresholds.
+   */
+  private calculateMood(happinessPercent: number, userConfig: UserConfig | null): BunnyMood {
+    const sadThreshold = userConfig?.moodSadThreshold ?? this.defaultSadThreshold;
+    const averageThreshold = userConfig?.moodAverageThreshold ?? this.defaultAverageThreshold;
+
+    if (happinessPercent < sadThreshold) {
+      return 'sad';
+    }
+    if (happinessPercent < averageThreshold) {
+      return 'average';
+    }
+    return 'happy';
+  }
+
+  /**
+   * Calculate average happiness across all bunnies.
+   */
+  private calculateAverageHappiness(bunnies: BunnyWithHappiness[]): number {
+    if (bunnies.length === 0) {
+      return 0;
+    }
+
+    const totalHappiness = bunnies.reduce((sum, bunny) => sum + bunny.happiness, 0);
+    return Math.round(totalHappiness / bunnies.length);
+  }
+
+  /**
+   * Select a random color from the default palette.
+   */
+  private selectRandomColor(): BunnyColor {
+    const randomIndex = Math.floor(Math.random() * this.defaultColorPalette.length);
+    return this.defaultColorPalette[randomIndex];
+  }
+
+  /**
+   * Get current authenticated user or throw error.
+   */
+  private getCurrentUser() {
     const user = this.auth.currentUser;
-    if (!user) throw new Error('User not authenticated');
-
-    const bunnyRef = doc(this.firestore, getBunniesCollectionPath(user.uid), bunnyId);
-    await deleteDoc(bunnyRef);
-    // Reactive stream will automatically update via collectionData
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    return user;
   }
 
-  /** Mood buckets based on absolute happiness points (not percent) */
-  //TODO: make this calculated based on current pointsPerCarrot config
-  private getMood(happiness: number): 'sad' | 'average' | 'happy' {
-    if (happiness < 30) return 'sad'; // < 10 carrots @ 3 points each
-    if (happiness >= 70) return 'happy'; // ≥ ~24 carrots
-    return 'average';
-  }
-
-  /** Normalizes Firestore Timestamp → Date */
-  private convertTimestamp(ts: any): Date {
-    if (!ts) return new Date();
-    if (ts instanceof Date) return ts;
-    if (ts?.toDate) return ts.toDate();
-    if (typeof ts === 'number') return new Date(ts);
-    return new Date(ts);
+  /**
+   * Normalize various timestamp formats to Date object.
+   */
+  private normalizeTimestamp(timestamp: any): Date {
+    if (!timestamp) {
+      return new Date();
+    }
+    if (timestamp instanceof Date) {
+      return timestamp;
+    }
+    if (timestamp?.toDate) {
+      return timestamp.toDate();
+    }
+    if (typeof timestamp === 'number') {
+      return new Date(timestamp);
+    }
+    return new Date(timestamp);
   }
 }
 

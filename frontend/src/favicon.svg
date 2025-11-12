@@ -1,0 +1,20 @@
+<svg width="192" height="192" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="UVbunny icon">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6A4DF5"/>
+      <stop offset="100%" stop-color="#9A7BFF"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="#F6F5FF"/>
+  <!-- ears -->
+  <ellipse cx="46" cy="30" rx="12" ry="24" fill="url(#g)"/>
+  <ellipse cx="82" cy="32" rx="12" ry="26" fill="url(#g)"/>
+  <!-- head -->
+  <circle cx="64" cy="64" r="30" fill="url(#g)"/>
+  <!-- face -->
+  <circle cx="52" cy="60" r="4" fill="#121212"/>
+  <circle cx="76" cy="60" r="4" fill="#121212"/>
+  <circle cx="64" cy="70" r="3.2" fill="#FF7A59"/>
+  <path d="M50 78 C56 84 72 84 78 78" stroke="#121212" stroke-width="3" stroke-linecap="round" fill="none"/>
+</svg>
+

@@ -72,6 +72,10 @@ export class HeaderComponent {
     }
   }
 
+  goHome(): void {
+    this.router.navigate(['/']);
+  }
+
   signOut(): void {
     // Navigate to logout page which will handle complete cleanup
     this.router.navigate(['/logout']);
