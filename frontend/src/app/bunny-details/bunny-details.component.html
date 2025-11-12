@@ -33,26 +33,68 @@
 
     <mat-card-content>
       <div class="give-carrots-section">
-        <h3 class="section-title">Give Carrots 🥕</h3>
-        <div class="give-carrots">
-          <mat-form-field appearance="outline" class="carrots-input">
-            <mat-label>Carrots (1-50)</mat-label>
-            <input
-              matInput
-              type="number"
-              [(ngModel)]="carrotsToGive"
-              min="1"
-              max="50"
-              aria-label="Number of carrots to give" />
-          </mat-form-field>
+        <div class="give-carrots-card">
+          <div class="carrots-header">
+            <h3 class="section-title">
+              <span class="carrot-emoji">🥕</span>
+              Give Carrots
+            </h3>
+            <p class="carrots-subtitle">Make {{ bunny?.name }} happy!</p>
+          </div>
+          
+          <div class="quick-actions">
+            <span class="quick-actions-label">Quick give:</span>
+            <div class="quick-buttons">
+              @for (amount of quickAmounts; track amount) {
+                <button
+                  mat-stroked-button
+                  class="quick-button"
+                  [class.active]="carrotsToGive === amount"
+                  (click)="setCarrotAmount(amount)"
+                  [disabled]="loading">
+                  {{ amount }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="custom-amount-section">
+            <mat-form-field appearance="outline" class="carrots-input">
+              <mat-label>Custom Amount</mat-label>
+              <input
+                matInput
+                type="number"
+                [(ngModel)]="carrotsToGive"
+                min="1"
+                max="50"
+                (input)="onCarrotAmountChange()"
+                aria-label="Number of carrots to give" />
+              <mat-hint>Enter 1-50 carrots</mat-hint>
+            </mat-form-field>
+          </div>
+
+          @let config = config$ | async;
+          @if (config) {
+            <div class="happiness-preview">
+              <div class="preview-item">
+                <mat-icon class="preview-icon">emoji_events</mat-icon>
+                <div class="preview-content">
+                  <span class="preview-label">Happiness Points</span>
+                  <span class="preview-value">+{{ getHappinessPreview(config.pointsPerCarrot) }}</span>
+                </div>
+              </div>
+            </div>
+          }
+
           <button
             mat-raised-button
-            color="primary"
+            class="give-button"
             (click)="giveCarrots()"
             [disabled]="loading || !carrotsToGive || carrotsToGive < 1 || carrotsToGive > 50"
             aria-label="Give carrots">
-            <mat-icon>favorite</mat-icon>
-            Give Carrots
+            <mat-icon class="button-icon">favorite</mat-icon>
+            <span>Give {{ carrotsToGive }} Carrot{{ carrotsToGive !== 1 ? 's' : '' }}!</span>
+            <span class="carrot-emoji-small">🥕</span>
           </button>
         </div>
       </div>

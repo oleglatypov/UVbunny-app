@@ -47,6 +47,7 @@ export class BunnyDetailsComponent implements OnInit, OnDestroy {
   carrotsToGive = 1;
   loading = false;
   config$: Observable<UserConfig | null>;
+  readonly quickAmounts = [1, 5, 10, 25, 50];
   private destroy$ = new Subject<void>();
   private bunnyId: string | null = null;
 
@@ -96,6 +97,23 @@ export class BunnyDetailsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  setCarrotAmount(amount: number): void {
+    this.carrotsToGive = amount;
+  }
+
+  onCarrotAmountChange(): void {
+    // Ensure value stays within bounds
+    if (this.carrotsToGive < 1) {
+      this.carrotsToGive = 1;
+    } else if (this.carrotsToGive > 50) {
+      this.carrotsToGive = 50;
+    }
+  }
+
+  getHappinessPreview(pointsPerCarrot: number): number {
+    return (this.carrotsToGive || 1) * pointsPerCarrot;
+  }
+
   giveCarrots(): void {
     if (!this.bunnyId || !this.carrotsToGive || this.carrotsToGive < 1 || this.carrotsToGive > 50) {
       return;
@@ -105,8 +123,13 @@ export class BunnyDetailsComponent implements OnInit, OnDestroy {
     this.bunnyDetailsService.giveCarrots(this.bunnyId, this.carrotsToGive).subscribe({
       next: () => {
         this.loading = false;
+        const carrotsGiven = this.carrotsToGive;
         this.carrotsToGive = 1;
-        this.snackBar.open('Carrots given!', 'Close', { duration: 3000 });
+        this.snackBar.open(
+          `🎉 ${carrotsGiven} carrot${carrotsGiven !== 1 ? 's' : ''} given to ${this.bunny?.name}! 🥕`,
+          'Close',
+          { duration: 4000 }
+        );
         this.loadEvents();
       },
       error: (error) => {
