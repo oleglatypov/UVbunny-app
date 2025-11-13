@@ -1,7 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, EnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { Firestore, collection, addDoc, query, orderBy, limit, startAfter, getDocs, QueryDocumentSnapshot, serverTimestamp } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
-import { Observable } from 'rxjs';
+import { Observable, from } from 'rxjs';
 import { CarrotEvent } from '../types';
 import { getEventsCollectionPath } from '../shared/paths';
 
@@ -24,6 +24,7 @@ interface EventsPageResult {
 export class BunnyDetailsService {
   private readonly firestore = inject(Firestore);
   private readonly auth = inject(Auth);
+  private readonly env = inject(EnvironmentInjector);
 
   private readonly minCarrots = 1;
   private readonly maxCarrots = 50;
@@ -86,17 +87,18 @@ export class BunnyDetailsService {
    * Create a carrot event in Firestore.
    */
   private async createCarrotEvent(userId: string, bunnyId: string, carrots: number): Promise<void> {
-    const eventsCollection = collection(this.firestore, getEventsCollectionPath(userId, bunnyId));
-    const eventData: Omit<CarrotEvent, 'id'> = {
-      type: 'CARROT_GIVEN',
-      carrots,
-      createdAt: new Date(),
-      source: this.eventSource,
-    };
-
-    await addDoc(eventsCollection, {
-      ...eventData,
-      createdAt: serverTimestamp(),
+    return runInInjectionContext(this.env, async () => {
+      const eventsCollection = collection(this.firestore, getEventsCollectionPath(userId, bunnyId));
+      const eventData: Omit<CarrotEvent, 'id'> = {
+        type: 'CARROT_GIVEN',
+        carrots,
+        createdAt: new Date(),
+        source: this.eventSource,
+      };
+      await addDoc(eventsCollection, {
+        ...eventData,
+        createdAt: serverTimestamp(),
+      });
     });
   }
 
@@ -108,14 +110,14 @@ export class BunnyDetailsService {
     bunnyId: string,
     lastDocument?: QueryDocumentSnapshot,
   ): Promise<EventsPageResult> {
-    const eventsCollection = collection(this.firestore, getEventsCollectionPath(userId, bunnyId));
-    const eventsQuery = this.buildEventsQuery(eventsCollection, lastDocument);
-    const querySnapshot = await getDocs(eventsQuery);
-
-    const events = this.mapDocumentsToCarrotEvents(querySnapshot);
-    const newLastDocument = this.getLastDocument(querySnapshot);
-
-    return { events, lastDoc: newLastDocument };
+    return runInInjectionContext(this.env, async () => {
+      const eventsCollection = collection(this.firestore, getEventsCollectionPath(userId, bunnyId));
+      const eventsQuery = this.buildEventsQuery(eventsCollection, lastDocument);
+      const querySnapshot = await getDocs(eventsQuery);
+      const events = this.mapDocumentsToCarrotEvents(querySnapshot);
+      const newLastDocument = this.getLastDocument(querySnapshot);
+      return { events, lastDoc: newLastDocument };
+    });
   }
 
   /**

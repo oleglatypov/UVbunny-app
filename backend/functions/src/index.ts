@@ -9,7 +9,7 @@ admin.initializeApp();
 const db = admin.firestore();
 
 /**
- * Required: Triggered when a carrot event is created
+ * Triggered when a carrot event is created
  * Increments the parent bunny's eventCount in a transaction
  * - Listens for new carrot event documents
  * - Validates event type (CARROT_GIVEN) and carrots count (1-50)

@@ -100,10 +100,23 @@ export class BunniesService {
         if (!userId) {
           return of([]);
         }
-
-        const bunniesCollection = collection(this.firestore, getBunniesCollectionPath(userId));
-        const sortedQuery = query(bunniesCollection, orderBy('createdAt', 'desc'));
-        return collectionData(sortedQuery, { idField: 'id' }) as Observable<FirestoreBunny[]>;
+        return new Observable<FirestoreBunny[]>((subscriber) => {
+          // Defer collectionData invocation to subscription time (inside injection context)
+          try {
+            const bunniesCollection = collection(this.firestore, getBunniesCollectionPath(userId));
+            const sortedQuery = query(bunniesCollection, orderBy('createdAt', 'desc'));
+            const inner$ = collectionData(sortedQuery, { idField: 'id' }) as Observable<FirestoreBunny[]>;
+            const sub = inner$.subscribe({
+              next: (val) => subscriber.next(val),
+              error: (err) => subscriber.error(err),
+              complete: () => subscriber.complete(),
+            });
+            return () => sub.unsubscribe();
+          } catch (e) {
+            subscriber.error(e);
+            return () => {}; // Return empty teardown function on error
+          }
+        });
       }),
     );
   }
