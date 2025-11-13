@@ -1,7 +1,7 @@
 /* Global Styles */
 /* You can add global styles to this file, and also import other style files */
 
-@import 'themes/bunny-theme';
+@use 'themes/bunny-theme';
 
 html, body {
   height: 100%;

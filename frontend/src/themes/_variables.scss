@@ -1,10 +1,12 @@
 // Bunny Theme Variables
 // Centralized color palette and design tokens
 
+@use 'sass:color';
+
 // Primary Colors
 $bunny-primary: #622c9d;
-$bunny-primary-light: lighten($bunny-primary, 10%);
-$bunny-primary-dark: darken($bunny-primary, 10%);
+$bunny-primary-light: color.adjust($bunny-primary, $lightness: 10%);
+$bunny-primary-dark: color.adjust($bunny-primary, $lightness: -10%);
 
 // Background Colors
 $bunny-bg-light: #ece5f1;

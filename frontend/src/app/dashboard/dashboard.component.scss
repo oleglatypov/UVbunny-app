@@ -1,5 +1,5 @@
-@import '../../themes/mixins';
-@import '../../themes/variables';
+@use '../../themes/variables' as *;
+@use '../../themes/mixins' as *;
 
 .dashboard-container {
   @include container(1200px);

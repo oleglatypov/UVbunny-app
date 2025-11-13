@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -36,6 +36,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   maxHappinessPoints: number | null = null; // Initialize as null until loaded from DB
   loading = false;
   configLoading = true; // Track if config is still loading
+  // Track original values to detect changes (used for reset logic)
   private originalPointsPerCarrot: number | null = null;
   private originalMaxHappinessPoints: number | null = null;
   private destroy$ = new Subject<void>();
@@ -43,48 +44,31 @@ export class SettingsComponent implements OnInit, OnDestroy {
   constructor(
     private configService: ConfigService,
     private snackBar: MatSnackBar,
-    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
     // Load initial value from user's database record
     this.configService.config$.pipe(takeUntil(this.destroy$)).subscribe({
       next: (config) => {
-        // ConfigService.config$ returns default { pointsPerCarrot: 3 } if no document exists
-        // So config will always have a value, but we check if it came from DB or is default
-        if (config) {
-          // Use the value from the database (or default 3 if no record exists)
-          this.pointsPerCarrot = config.pointsPerCarrot;
-          this.originalPointsPerCarrot = config.pointsPerCarrot;
-          
-          // Set maxHappinessPoints from config or calculate default (pointsPerCarrot * 100)
-          this.maxHappinessPoints = config.maxHappinessPoints ?? config.pointsPerCarrot * 100;
-          this.originalMaxHappinessPoints = this.maxHappinessPoints;
-        } else {
-          // Fallback: only use 3 if config is null (shouldn't happen, but safety)
-          this.pointsPerCarrot = 3;
-          this.originalPointsPerCarrot = 3;
-          this.maxHappinessPoints = 300; // 3 * 100
-          this.originalMaxHappinessPoints = 300;
-        }
-        
-        // Ensure values are normalized and trigger change detection
-        this.normalizeValue();
-        this.normalizeMaxHappinessPoints();
-        this.configLoading = false; // Config has loaded
-        this.cdr.detectChanges();
+        // ConfigService guarantees a default config when none exists
+        const ppc = config?.pointsPerCarrot ?? 3;
+        const max = config?.maxHappinessPoints ?? ppc * 100;
+        this.pointsPerCarrot = this.clampPoints(ppc);
+        this.maxHappinessPoints = this.clampMax(max, this.pointsPerCarrot);
+        this.originalPointsPerCarrot = this.pointsPerCarrot;
+        this.originalMaxHappinessPoints = this.maxHappinessPoints;
+        this.configLoading = false;
       },
       error: (error) => {
+        // Graceful fallback to defaults
         this.configLoading = false;
-        // On error, use default value but show error message
         this.pointsPerCarrot = 3;
         this.originalPointsPerCarrot = 3;
         this.maxHappinessPoints = 300;
         this.originalMaxHappinessPoints = 300;
-        this.snackBar.open('Error loading settings: ' + error.message, 'Close', {
+        this.snackBar.open('Error loading settings: ' + (error?.message || 'Unknown error'), 'Close', {
           duration: 5000,
         });
-        this.cdr.detectChanges();
       },
     });
   }
@@ -95,94 +79,50 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   isValid(): boolean {
-    const pointsValid = (
+    // Simple bounds checking; both values must be present & valid
+    return (
       this.pointsPerCarrot !== null &&
-      this.pointsPerCarrot !== undefined &&
-      !isNaN(this.pointsPerCarrot) &&
       this.pointsPerCarrot >= 1 &&
-      this.pointsPerCarrot <= 10
-    );
-    
-    const maxPointsValid = (
+      this.pointsPerCarrot <= 10 &&
       this.maxHappinessPoints !== null &&
-      this.maxHappinessPoints !== undefined &&
-      !isNaN(this.maxHappinessPoints) &&
       this.maxHappinessPoints >= 1
     );
-    
-    return pointsValid && maxPointsValid;
   }
 
   onSliderChange(value: number): void {
-    // Update the value directly from the slider
-    this.pointsPerCarrot = value;
-    this.normalizeValue();
-    // Auto-update maxHappinessPoints if it's using default (pointsPerCarrot * 100)
-    if (this.maxHappinessPoints === this.originalMaxHappinessPoints && 
-        this.originalMaxHappinessPoints === (this.originalPointsPerCarrot ?? 3) * 100) {
-      this.maxHappinessPoints = value * 100;
-      this.normalizeMaxHappinessPoints();
+    this.pointsPerCarrot = this.clampPoints(value);
+    // If max is still tracking the original auto-calculated value, update it
+    const defaultMaxOriginal = (this.originalPointsPerCarrot ?? 3) * 100;
+    if (this.originalMaxHappinessPoints === defaultMaxOriginal && this.maxHappinessPoints === this.originalMaxHappinessPoints) {
+      this.maxHappinessPoints = this.clampMax(this.pointsPerCarrot * 100, this.pointsPerCarrot);
     }
-    // Force change detection to update Impact Preview immediately
-    this.cdr.detectChanges();
   }
 
   onMaxHappinessSliderChange(value: number): void {
-    this.maxHappinessPoints = value;
-    this.normalizeMaxHappinessPoints();
-    this.cdr.detectChanges();
+    this.maxHappinessPoints = this.clampMax(value, this.pointsPerCarrot ?? 3);
   }
 
-  private normalizeValue(): void {
-    // Skip normalization if value is null (still loading)
-    if (this.pointsPerCarrot === null || this.pointsPerCarrot === undefined) {
-      return;
-    }
-
-    // Convert to number if it's a string
-    if (typeof this.pointsPerCarrot === 'string') {
-      this.pointsPerCarrot = parseFloat(this.pointsPerCarrot) || 3;
-    }
-
-    // Ensure value stays within bounds
-    if (isNaN(this.pointsPerCarrot) || this.pointsPerCarrot < 1) {
-      this.pointsPerCarrot = 1;
-    } else if (this.pointsPerCarrot > 10) {
-      this.pointsPerCarrot = 10;
-    }
-
-    // Round to integer if needed
-    this.pointsPerCarrot = Math.round(this.pointsPerCarrot);
+  /** Utility: clamp points per carrot (1..10) */
+  private clampPoints(value: any): number {
+    let v = typeof value === 'string' ? parseFloat(value) : value;
+    if (!Number.isFinite(v)) v = 3;
+    if (v < 1) v = 1;
+    if (v > 10) v = 10;
+    return Math.round(v);
   }
 
-  private normalizeMaxHappinessPoints(): void {
-    // Skip normalization if value is null (still loading)
-    if (this.maxHappinessPoints === null || this.maxHappinessPoints === undefined) {
-      return;
-    }
-
-    // Convert to number if it's a string
-    if (typeof this.maxHappinessPoints === 'string') {
-      this.maxHappinessPoints = parseFloat(this.maxHappinessPoints) || (this.pointsPerCarrot ?? 3) * 100;
-    }
-
-    // Ensure value stays within bounds (minimum 1)
-    if (isNaN(this.maxHappinessPoints) || this.maxHappinessPoints < 1) {
-      this.maxHappinessPoints = (this.pointsPerCarrot ?? 3) * 100;
-    }
-
-    // Round to integer if needed
-    this.maxHappinessPoints = Math.round(this.maxHappinessPoints);
+  /** Utility: clamp max happiness (>=1, fallback to points*100) */
+  private clampMax(value: any, points: number): number {
+    let v = typeof value === 'string' ? parseFloat(value) : value;
+    if (!Number.isFinite(v) || v < 1) v = points * 100;
+    return Math.round(v);
   }
 
   /**
    * Get normalized points per carrot for display
    */
   getPointsPerCarrot(): number {
-    const value = this.pointsPerCarrot;
-    if (!value || value < 1) return 1;
-    if (value > 10) return 10;
-    return Math.round(value);
+    return this.pointsPerCarrot === null ? 1 : this.clampPoints(this.pointsPerCarrot);
   }
 
   /**
@@ -203,10 +143,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
    * Get current max happiness points or calculate default
    */
   getMaxHappinessPoints(): number {
-    if (this.maxHappinessPoints !== null && this.maxHappinessPoints >= 1) {
-      return this.maxHappinessPoints;
-    }
-    return this.getPointsPerCarrot() * 100;
+    return this.maxHappinessPoints === null ? this.getPointsPerCarrot() * 100 : this.clampMax(this.maxHappinessPoints, this.getPointsPerCarrot());
   }
 
   /**
@@ -218,18 +155,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   resetToDefault(): void {
-    // Reset to default values
     this.pointsPerCarrot = 3;
-    this.maxHappinessPoints = 300; // 3 * 100
-    this.normalizeValue();
-    this.normalizeMaxHappinessPoints();
-    this.cdr.detectChanges();
+    this.maxHappinessPoints = 300;
   }
 
   async saveSettings(): Promise<void> {
     // Step 1: Validation and Feedback in the UI
-    if (!this.isValid() || this.pointsPerCarrot === null || this.maxHappinessPoints === null) {
-      this.snackBar.open('Please ensure all values are valid (points: 1-10, max happiness: ≥1)', 'Close', {
+    if (!this.isValid() || this.pointsPerCarrot === null) {
+      this.snackBar.open('Points per carrot must be between 1 and 10', 'Close', {
         duration: 3000,
       });
       return;
@@ -243,7 +176,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
       // This will write to users/{uid}/config/current with merge: true
       // Both values are guaranteed to be numbers here due to validation above
       await this.configService.updatePointsPerCarrot(this.pointsPerCarrot);
-      await this.configService.updateMaxHappinessPoints(this.maxHappinessPoints);
+      if (this.maxHappinessPoints !== null) {
+        await this.configService.updateMaxHappinessPoints(this.maxHappinessPoints);
+      }
       
       // Update original values to track changes
       this.originalPointsPerCarrot = this.pointsPerCarrot;
@@ -274,9 +209,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         errorMessage = 'An unexpected error occurred. Please try again.';
       }
       
-      this.snackBar.open(errorMessage, 'Close', {
-        duration: 5000,
-      });
+      this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
     }
   }
 }

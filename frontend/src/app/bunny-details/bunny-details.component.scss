@@ -1,5 +1,5 @@
-@import '../../themes/mixins';
-@import '../../themes/variables';
+@use '../../themes/variables' as *;
+@use '../../themes/mixins' as *;
 
 .details-container {
   @include container(900px);

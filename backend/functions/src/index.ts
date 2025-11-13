@@ -11,6 +11,10 @@ const db = admin.firestore();
 /**
  * Required: Triggered when a carrot event is created
  * Increments the parent bunny's eventCount in a transaction
+ * - Listens for new carrot event documents
+ * - Validates event type (CARROT_GIVEN) and carrots count (1-50)
+ * - Uses transaction to safely increment bunny.eventCount by the carrots amount
+ * - Transactions prevent race conditions when multiple events are created simultaneously
  */
 export const onCarrotEventCreate = functions.firestore
   .document('users/{uid}/bunnies/{bunnyId}/events/{eventId}')

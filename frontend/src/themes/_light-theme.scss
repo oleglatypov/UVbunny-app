@@ -1,7 +1,7 @@
 // Light Theme Styles
 // Styles specific to the light theme
 
-@import 'variables';
+@use 'variables' as *;
 
 body.light-theme {
   background-color: $bunny-bg-light;

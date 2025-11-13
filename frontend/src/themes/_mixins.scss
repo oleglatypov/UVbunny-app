@@ -1,7 +1,7 @@
 // Bunny Theme Mixins
 // Reusable SCSS mixins for common patterns
 
-@import 'variables';
+@use 'variables' as *;
 
 // Dark theme context mixin
 @mixin dark-theme {

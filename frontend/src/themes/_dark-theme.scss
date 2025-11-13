@@ -1,8 +1,8 @@
 // Dark Theme Styles
 // Styles specific to the dark theme
 
-@import 'variables';
-@import 'mixins';
+@use 'variables' as *;
+@use 'mixins' as *;
 
 body.dark-theme {
   background-color: $bunny-bg-dark;

@@ -1,5 +1,5 @@
-@import '../../themes/variables';
-@import '../../themes/mixins';
+@use '../../themes/variables' as *;
+@use '../../themes/mixins' as *;
 
 .spacer {
   flex: 1 1 auto;
@@ -10,6 +10,7 @@
   gap: $spacing-sm;
   margin-right: $spacing-md;
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
   transition: opacity $transition-fast;
   

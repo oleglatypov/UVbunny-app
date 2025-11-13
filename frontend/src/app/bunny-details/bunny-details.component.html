@@ -8,6 +8,7 @@
           <img
             [src]="getBunnyIcon(bunny)"
             [alt]="bunny.name + ' icon'"
+            [title]="bunny.name + ' icon'"
             class="bunny-details-icon" />
         </div>
         <div class="bunny-info-section">
@@ -39,7 +40,7 @@
               <span class="carrot-emoji">🥕</span>
               Give Carrots
             </h3>
-            <p class="carrots-subtitle">Make {{ bunny?.name }} happy!</p>
+            <p class="carrots-subtitle">Make {{ bunny.name }} happy!</p>
           </div>
           
           <div class="quick-actions">

@@ -1,7 +1,7 @@
 // Material Component Overrides
 // Custom styling for Angular Material components
 
-@import 'variables';
+@use 'variables' as *;
 
 // Root CSS variables for Material theme
 :root {

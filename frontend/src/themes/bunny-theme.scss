@@ -1,9 +1,9 @@
 // Bunny Theme - Main Entry Point
 // Centralized theme system for UVbunny app
 
-@import 'variables';
-@import 'mixins';
-@import 'light-theme';
-@import 'dark-theme';
-@import 'material-overrides';
+@use 'variables';
+@use 'mixins';
+@use 'light-theme';
+@use 'dark-theme';
+@use 'material-overrides';
 
